@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Training Targets</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root { 
+      --primary-color: #397dcc; 
+      --primary-dark: #2c5f9e; 
+      --secondary-color: #f0f0f0; 
+      --success-color: #d4edda; 
+      --success-text: #155724; 
+      --error-color: #f8d7da; 
+      --error-text: #721c24; 
+      --highlight-yellow: #fff78c; 
+      --highlight-brown: #e6b899; 
+      --highlight-green: #c7fccb; 
+      --row-highlight-light: #e6f2ff; 
+      --row-highlight-dark: #cce5ff; 
+      --border-color: #bfc9d7; 
+      --text-dark: #333; 
+      --text-light: #fff; 
+      --card-bg: #ffffff; 
+      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 30px; background: #f8fafc; color: var(--text-dark); line-height: 1.6; }
+    h1 { color: var(--primary-color); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); display: flex; align-items: center; gap: 10px; }
+    .container { max-width: 95%; margin: 0 auto; }
+    table { border-collapse: separate; border-spacing: 0; width: 100%; margin-bottom: 30px; box-shadow: var(--card-shadow); border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px 15px; text-align: center; border: 1px solid var(--border-color); transition: all 0.2s ease; }
+    .wide-cell { width: 220px; text-align: left; font-weight: 500; }
+    th { background: var(--primary-color); color: var(--text-light); font-weight: 600; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px; border-bottom: 2px solid var(--primary-dark); }
+    tr:not(.total-row):hover td { background-color: rgba(57, 125, 204, 0.1); }
+    .total-row { background-color: var(--row-highlight-light); font-weight: 600; }
+    .grand-total-row { background-color: var(--row-highlight-dark); font-weight: 700; font-size: 1.05em; }
+    .yellow-field { background: var(--highlight-yellow); font-weight: 600; }
+    .brown-field { background: var(--highlight-brown); font-weight: 600; }
+    .green-field { background: var(--highlight-green); font-weight: 600; }
+    input[type="number"] { width: 60px; padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 4px; text-align: center; font-family: inherit; font-size: 0.9em; background-color: #fff; }
+    .edit-field { background-color: #fff; border: 1px solid var(--primary-color); box-shadow: 0 0 0 1px var(--primary-color); }
+    .edit-field-highlight { background-color: #fff8e1; box-shadow: 0 0 0 2px var(--highlight-yellow); }
+    .control-section { display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap; }
+    .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: var(--card-shadow); flex: 1; min-width: 300px; }
+    .card-title { margin-top: 0; margin-bottom: 15px; color: var(--primary-dark); display: flex; align-items: center; gap: 8px; }
+    
+    /* Modern Dropdown */
+    .custom-select { position: relative; display: inline-block; width: 100%; }
+    .custom-select select {
+      appearance: none; width: 100%; padding: 10px 40px 10px 15px;
+      border: 1px solid var(--border-color); border-radius: 6px;
+      font-size: 1em; font-weight: 500; cursor: pointer;
+      background: #fff; transition: border-color 0.3s ease;
+    }
+    .custom-select select:hover { border-color: var(--primary-color); }
+    .custom-select::after {
+      content: "\f078"; font-family: "Font Awesome 6 Free"; font-weight: 900;
+      position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: var(--primary-color);
+    }
+
+    button { padding: 10px 18px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
+    button:hover { background: var(--primary-dark); }
+    .flash-message { padding: 12px 15px; margin: 15px 0; border-radius: 6px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+    .flash-success { background: var(--success-color); color: var(--success-text); border-left: 4px solid #28a745; }
+    .flash-error { background: var(--error-color); color: var(--error-text); border-left: 4px solid #dc3545; }
+    .add-year-btn { background-color: #28a745; margin-left: 10px; }
+    .add-year-btn:hover { background-color: #218838; }
+    .button-group { display: flex; gap: 10px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-edit"></i> Edit Training Targets</h1>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message flash-{{ category }}">
+            <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Year Selection -->
+    <div class="control-section">
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Select Year</h3>
+        <form method="get" action="{{ url_for('target.edit_data') }}">
+          <div class="custom-select">
+            <select name="target_year" id="target_year" onchange="this.form.submit()">
+              {% for year in year_range|sort %}
+                <option value="{{ year }}" {% if year == target_year %}selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+
+        <div style="margin-top: 15px;">
+          <p><strong>Status:</strong> 
+            {% if has_data %}
+              <span style="color: green;">Data exists for {{ target_year }}</span>
+            {% else %}
+              <span style="color: #e67700;">No data for {{ target_year }} - You can add new data</span>
+            {% endif %}
+          </p>
+          
+          {% if not has_data %}
+            <form method="post" action="{{ url_for('target.initialize_year') }}" style="margin-top: 10px;">
+              <input type="hidden" name="target_year" value="{{ target_year }}">
+              <button type="submit" class="add-year-btn">
+                <i class="fas fa-plus-circle"></i> Initialize {{ target_year }}
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-sync-alt"></i> Data Actions</h3>
+        <form method="post" action="{{ url_for('target.sync_training_data') }}">
+          <input type="hidden" name="target_year" value="{{ target_year }}">
+          <button type="submit">
+            <i class="fas fa-sync"></i> Sync with Master Training List
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Training Table -->
+    {% if has_data %}
+    <form method="post" action="{{ url_for('target.edit_data') }}">
+      <input type="hidden" name="target_year" value="{{ target_year }}">
+
+      <!-- Save & Dashboard Buttons at Top -->
+      <div class="button-group">
+        <button type="submit"><i class="fas fa-save"></i> Save Changes</button>
+        <a href="{{ url_for('target.dashboard', target_year=target_year) }}">
+          <button type="button"><i class="fas fa-eye"></i> View Dashboard</button>
+        </a>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th class="wide-cell">Training Name</th>
+              <th>PMO Category</th>
+              <th>PL Category</th>
+              <th>TNI</th>
+              <th>Batch Size</th>
+              <th>Target</th>
+              <th>YTD Target</th>
+              <th>YTD Actual</th>
+              <th>Balance</th>
+              <th>Prog to Run</th>
+              <th>April</th><th>May</th><th>June</th><th>July</th><th>August</th><th>September</th><th>October</th><th>November</th><th>December</th><th>January</th><th>February</th><th>March</th>
+              <th>Target Year</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for training in trainings if not training.is_total_row %}
+            <tr>
+              <td>{{ training.display_id }}</td>
+              <td class="wide-cell">{{ training.training_name }}</td>
+              <td>{{ training.pmo_category }}</td>
+              <td>{{ training.pl_category }}</td>
+              <td>{{ training.tni or 0 }}</td>
+              <td><input type="number" name="batch_size_{{ training.id }}" value="{{ training.batch_size or '' }}" class="edit-field"></td>
+              <td><input type="number" name="target_{{ training.id }}" value="{{ training.target or '' }}" class="edit-field"></td>
+              <td>{{ training.ytd_target or 0 }}</td>
+              <td class="green-field">{{ training.ytd_actual or 0 }}</td>
+              <td class="brown-field">{{ training.balance or 0 }}</td>
+              <td class="yellow-field">{{ training.programs_to_run or 0 }}</td>
+              <td>{{ training.april or 0 }}</td><td>{{ training.may or 0 }}</td><td>{{ training.june or 0 }}</td><td>{{ training.july or 0 }}</td><td>{{ training.august or 0 }}</td><td>{{ training.september or 0 }}</td><td>{{ training.october or 0 }}</td><td>{{ training.november or 0 }}</td><td>{{ training.december or 0 }}</td><td>{{ training.january or 0 }}</td><td>{{ training.february or 0 }}</td><td>{{ training.march or 0 }}</td>
+              <td>{{ training.target_year or target_year }}</td>
+            </tr>
+            {% endfor %}
+
+            {% for training in trainings if training.is_total_row %}
+            <tr class="total-row">
+              <td></td>
+              <td class="wide-cell">{{ training.training_name }}</td>
+              <td>{{ training.pmo_category }}</td>
+              <td>{{ training.pl_category }}</td>
+              <td>{{ training.tni or 0 }}</td>
+              <td><span>{{ training.batch_size or '' }}</span></td>
+              <td><span>{{ training.target or '' }}</span></td>
+              <td>{{ training.ytd_target or 0 }}</td>
+              <td class="green-field">{{ training.ytd_actual or 0 }}</td>
+              <td class="brown-field">{{ training.balance or 0 }}</td>
+              <td class="yellow-field">{{ training.programs_to_run or 0 }}</td>
+              <td>{{ training.april or 0 }}</td><td>{{ training.may or 0 }}</td><td>{{ training.june or 0 }}</td><td>{{ training.july or 0 }}</td><td>{{ training.august or 0 }}</td><td>{{ training.september or 0 }}</td><td>{{ training.october or 0 }}</td><td>{{ training.november or 0 }}</td><td>{{ training.december or 0 }}</td><td>{{ training.january or 0 }}</td><td>{{ training.february or 0 }}</td><td>{{ training.march or 0 }}</td>
+              <td>{{ training.target_year or target_year }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </form>
+    {% else %}
+      <div class="card" style="text-align: center; padding: 40px;">
+        <h3><i class="fas fa-calendar-plus"></i> No Data for {{ target_year }}</h3>
+        <p>Select a different year or initialize this year to start adding data.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('focus', () => input.classList.add('edit-field-highlight'));
+        input.addEventListener('blur', () => input.classList.remove('edit-field-highlight'));
+      });
+    });
+  </script>
+</body>
+</html>

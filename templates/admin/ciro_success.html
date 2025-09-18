@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>अभिप्राय यशस्वी</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #003366;">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="{{ url_for('static', filename='image.png') }}" alt="Tata Motors Logo" height="40">
+                टाटा मोटर्स - प्रशिक्षण अभिप्राय प्रणाली
+            </a>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Success Card -->
+    <div class="container mt-4">
+        <div class="card shadow">
+            <div class="card-header text-center" style="background-color: #003366; color: white;">
+                <h4 class="mb-0">धन्यवाद!</h4>
+            </div>
+            <div class="card-body text-center py-5">
+                <div class="display-4 text-success mb-4">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h2 class="mb-4">तुमचा अभिप्राय यशस्वीरित्या सबमिट केला गेला आहे.</h2>
+                <p class="lead">आमच्या प्रशिक्षण कार्यक्रमांच्या सुधारणेसाठी तुमचा अभिप्राय महत्त्वाचा आहे.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-3 text-center" style="background-color: #003366; color: white;">
+        <div class="container">
+            <p class="mb-0">टाटा मोटर्स, पुणे © {{ now.year if now else '2025' }} | सर्व हक्क राखीव</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

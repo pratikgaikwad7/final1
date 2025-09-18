@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Training Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dashboard-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .metric-title {
+            font-size: 14px;
+            color: #777;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .chart-container {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-title">Training Analytics Dashboard</div>
+
+    <!-- METRIC CARDS SECTION -->
+    <div class="metrics-grid">
+        {% for key, value in annual_targets.items() %}
+            <div class="metric-card">
+                <div class="metric-title">{{ key }}</div>
+                <div class="metric-value">{{ value }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- CHART SECTION -->
+    <div class="chart-container">
+        <canvas id="monthlyAdherenceChart" height="120"></canvas>
+    </div>
+
+    <!-- CHART SCRIPT -->
+    <script>
+        const monthlyLabels = {{ glide_path['labels'] | tojson }};
+        const monthlyCounts = {{ glide_path['values'] | tojson }};
+
+        const data = {
+            labels: monthlyLabels,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Monthly Count',
+                    data: monthlyCounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    type: 'line',
+                    label: 'Trend',
+                    data: monthlyCounts,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false,
+                    tension: 0.3
+                }
+            ]
+        };
+
+        const config = {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Adherence (Bar + Line)'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            },
+        };
+
+        new Chart(document.getElementById('monthlyAdherenceChart'), config);
+    </script>
+
+</body>
+</html>

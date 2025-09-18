@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <!-- Bootstrap CSS & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Updated color scheme with professional contrasting colors */
+      --primary-color: #1a3a5f;
+      --secondary-color: #2c5282;
+      --accent-color: #3182ce;
+      --light-accent: #ebf4ff;
+      --light-background: #f5f9ff;
+      --card-background: #ffffff;
+      --text-color: #2d3748;
+      --text-muted: #64748b;
+      --dark-blue: #0c2135;
+      --medium-blue: #1e4976;
+      --light-blue: #e6f0ff;
+      --highlight-color: #4299e1;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.07);
+      --border-radius: 10px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--dark-blue);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 1200px;
+      padding: 0 20px;
+    }
+    
+    /* Top Navigation Bar */
+    .top-nav {
+      background-color: var(--medium-blue);
+      padding: 12px 0;
+      box-shadow: var(--shadow-md);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .user-info-box {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 15px;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.15);
+      padding: 8px 16px;
+      border-radius: 30px;
+      color: white;
+      font-weight: 500;
+    }
+    
+    .user-info i {
+      margin-right: 8px;
+      color: var(--light-blue);
+    }
+    
+    .logout-btn {
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .logout-btn:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .header {
+      text-align: center;
+      margin: 40px 0 30px;
+      padding: 0 16px;
+    }
+    
+    .header h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    
+    .header p.lead {
+      font-size: 1rem;
+      color: var(--light-blue);
+      max-width: 600px;
+      margin: 0 auto;
+      font-weight: 400;
+    }
+    
+    .menu-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+    }
+    
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    
+    .menu-item {
+      background: var(--card-background);
+      padding: 24px 20px;
+      border-radius: var(--border-radius);
+      text-align: center;
+      text-decoration: none;
+      color: var(--text-color);
+      box-shadow: var(--shadow-md);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .menu-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--secondary-color), var(--highlight-color));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: var(--transition);
+    }
+    
+    .menu-item:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(203, 213, 224, 0.5);
+    }
+    
+    .menu-item:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .menu-item i {
+      font-size: 1.75rem;
+      margin-bottom: 16px;
+      color: var(--accent-color);
+      background-color: var(--light-accent);
+      width: 60px;
+      height: 60px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      transition: var(--transition);
+    }
+    
+    .menu-item:hover i {
+      transform: scale(1.05);
+      background-color: rgba(49, 130, 206, 0.1);
+    }
+    
+    .menu-item h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    
+    .menu-item p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 0;
+      font-weight: 400;
+      line-height: 1.4;
+    }
+    
+  
+    
+    /* Animation for cards */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .menu-item {
+      animation: fadeInUp 0.4s ease forwards;
+      opacity: 0;
+    }
+    
+    .menu-item:nth-child(1) { animation-delay: 0.05s; }
+    .menu-item:nth-child(2) { animation-delay: 0.1s; }
+    .menu-item:nth-child(3) { animation-delay: 0.15s; }
+    .menu-item:nth-child(4) { animation-delay: 0.2s; }
+    .menu-item:nth-child(5) { animation-delay: 0.25s; }
+    .menu-item:nth-child(6) { animation-delay: 0.3s; }
+    .menu-item:nth-child(7) { animation-delay: 0.35s; }
+    .menu-item:nth-child(8) { animation-delay: 0.4s; }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .header h1 {
+        font-size: 1.75rem;
+      }
+      
+      .header p.lead {
+        font-size: 0.95rem;
+      }
+      
+      .user-info-box {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .header {
+        margin: 30px 0 20px;
+      }
+      
+      .header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .menu {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .container {
+        padding: 0 12px;
+      }
+      
+      .header {
+        margin: 24px 0 16px;
+      }
+      
+      .header h1 {
+        font-size: 1.35rem;
+      }
+      
+      .header p.lead {
+        font-size: 0.9rem;
+      }
+      
+      .menu {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      
+      .menu-item {
+        padding: 20px 16px;
+      }
+      
+      .menu-item i {
+        font-size: 1.5rem;
+        width: 50px;
+        height: 50px;
+      }
+      
+      .menu-item h3 {
+        font-size: 1rem;
+      }
+      
+      .menu-item p {
+        font-size: 0.8rem;
+      }
+      
+      .user-info-box {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="container">
+      <div class="user-info-box">
+        {% if user %}
+        <div class="user-info">
+          <i class="bi bi-person-circle"></i>
+          <span> ({{ user.role }})</span>
+        </div>
+        <a href="{{ url_for('user_auth.logout') }}" class="logout-btn">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Logout</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>Admin Dashboard</h1>
+      <p class="lead">Welcome to the administration panel. Manage training programs, attendance, and reports in one centralized platform.</p>
+    </div>
+    <div class="menu-container">
+      <div class="menu">
+        <a href="/schedule_program" class="menu-item">
+          <i class="bi bi-calendar-plus"></i>
+          <h3>Schedule Program</h3>
+          <p>Create and schedule new training programs</p>
+        </a>
+        <a href="/programs" class="menu-item">
+          <i class="bi bi-list-ul"></i>
+          <h3>Training Records</h3>
+          <p>View and manage all training programs</p>
+        </a>
+        <a href="/upload_eor" class="menu-item">
+          <i class="bi bi-upload"></i>
+          <h3>Data Upload Center</h3>
+          <p>Upload EOR and other training records</p>
+        </a>
+        <a href="{{ url_for('view_bp.view_master_data') }}" class="menu-item">
+          <i class="bi bi-graph-up"></i>
+          <h3>Reports</h3>
+          <p>Generate detailed training reports</p>
+        </a>
+        <a href="{{ url_for('target.dashboard') }}" class="menu-item">
+          <i class="bi bi-bullseye"></i>
+          <h3>Target Management</h3>
+          <p>Set and manage training targets</p>
+        </a>
+        <a href="{{ url_for('training.upload_and_summary') }}" class="menu-item">
+          <i class="bi bi-building"></i>
+          <h3>Factory TNI</h3>
+          <p>Manage TNI shared by Factory</p>
+        </a>
+        <a href="{{ url_for('ciro.dashboard') }}" class="menu-item">
+          <i class="bi bi-bar-chart-line"></i>
+          <h3>CIRO Dashboard</h3>
+          <p>View CIRO training metrics</p>
+        </a>
+        <!-- New Tab for Manage Users -->
+        <a href="{{ url_for('user_auth.manage_users') }}" class="menu-item">
+          <i class="bi bi-people"></i>
+          <h3>Manage Users</h3>
+          <p>Add, update, and manage user credentials</p>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

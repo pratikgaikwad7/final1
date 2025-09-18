@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tata Motors - Training Feedback System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #003366;">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="{{ url_for('static', filename='image.png') }}" alt="Tata Motors Logo" height="40">
+                Tata Motors - Training Feedback System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ciro.dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ciro.form') }}">Feedback Form</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+    </div>
+<div class="card shadow">
+    <div class="card-header" style="background-color: #003366; color: white;">
+        <h4 class="mb-0">Training Sessions Overview</h4>
+    </div>
+    <div class="card-body">
+        <form method="get" class="mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="month" class="form-label">Month</label>
+                    <select id="month" name="month" class="form-select">
+                        <option value="">All</option>
+                        <option value="1" {% if selected_month == '1' %}selected{% endif %}>January</option>
+                        <option value="2" {% if selected_month == '2' %}selected{% endif %}>February</option>
+                        <option value="3" {% if selected_month == '3' %}selected{% endif %}>March</option>
+                        <option value="4" {% if selected_month == '4' %}selected{% endif %}>April</option>
+                        <option value="5" {% if selected_month == '5' %}selected{% endif %}>May</option>
+                        <option value="6" {% if selected_month == '6' %}selected{% endif %}>June</option>
+                        <option value="7" {% if selected_month == '7' %}selected{% endif %}>July</option>
+                        <option value="8" {% if selected_month == '8' %}selected{% endif %}>August</option>
+                        <option value="9" {% if selected_month == '9' %}selected{% endif %}>September</option>
+                        <option value="10" {% if selected_month == '10' %}selected{% endif %}>October</option>
+                        <option value="11" {% if selected_month == '11' %}selected{% endif %}>November</option>
+                        <option value="12" {% if selected_month == '12' %}selected{% endif %}>December</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="year" class="form-label">Year</label>
+                    <select id="year" name="year" class="form-select">
+                        <option value="">All</option>
+                        {% for year in years %}
+                            <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="trainer" class="form-label">Trainer</label>
+                    <input type="text" id="trainer" name="trainer" class="form-control" 
+                           placeholder="Trainer Name" value="{{ selected_trainer or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" id="search" name="search" class="form-control" 
+                           placeholder="Program or Name" value="{{ search_query or '' }}">
+                </div>
+                <div class="col-md-12 text-end">
+                    <button type="submit" class="btn btn-primary me-2">Apply Filter</button>
+                    <a href="{{ url_for('ciro.dashboard') }}" class="btn btn-outline-secondary">Reset</a>
+                    <a href="{{ url_for('ciro.export_summary', month=selected_month, year=selected_year, trainer=selected_trainer, search=search_query) }}" 
+                       class="btn btn-success ms-2">Export Excel</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Program</th>
+                        <th>Date</th>
+                        <th>Trainers</th>
+                        <th>Responses</th>
+                        <th>CSI</th>
+                        <th>TFI</th>
+                        <th>Avg Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr>
+                        <td>{{ session.program_title }}</td>
+                        <td>{{ session.program_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ session.trainer_names }}</td>
+                        <td>{{ session.response_count }}</td>
+                        <td class="{% if session.csi >= 3.5 %}text-success{% elif session.csi >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ "%.2f"|format(session.csi) }}
+                        </td>
+                        <td class="{% if session.tfi >= 3.5 %}text-success{% elif session.tfi >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ "%.2f"|format(session.tfi) if session.tfi else 'N/A' }}
+                        </td>
+                        <td class="{% if session.avg_score >= 3.5 %}text-success{% elif session.avg_score >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ "%.2f"|format(session.avg_score) if session.avg_score else 'N/A' }}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('ciro.training_detail', program_title=session.program_title, program_date=session.program_date.strftime('%Y-%m-%d')) }}" 
+                               class="btn btn-sm btn-outline-info me-1">View</a>
+                            <a href="{{ url_for('ciro.export_detail', program_title=session.program_title, program_date=session.program_date.strftime('%Y-%m-%d')) }}" 
+                               class="btn btn-sm btn-outline-primary">Export</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center">No training sessions found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if overall_avg_score is not none %}
+        <div class="mt-4 p-3 bg-light rounded">
+            <h5>Overall Average Score: <span class="{% if overall_avg_score >= 3.5 %}text-success{% elif overall_avg_score >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                {{ "%.2f"|format(overall_avg_score) }}</span></h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+ </div>
+
+    <!-- templates/base.html -->
+    <!-- Change the footer to: -->
+    <footer class="mt-5 py-3 text-center" style="background-color: #003366; color: white;">
+        <div class="container">
+            <p class="mb-0">Tata Motors, Pune © {{ now.year if now else '2025' }} | All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

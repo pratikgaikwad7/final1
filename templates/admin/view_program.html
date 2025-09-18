@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Training Program Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* CSS Reset & Normalization */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --primary-color: #4361ee;
+      --secondary-color: #3f37c9;
+      --accent-color: #4895ef;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+      --success-color: #4cc9f0;
+      --danger-color: #f72585;
+      --warning-color: #f8961e;
+      --gray-color: #6c757d;
+      --border-color: #e0e0e0;
+      --card-bg: #ffffff;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background-color: #f8fafc;
+      color: var(--dark-color);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Tab Navigation */
+    .nav-tabs {
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+    
+    .nav-tabs .nav-link {
+      font-weight: 500;
+      color: var(--gray-color);
+      padding: 0.75rem 1.25rem;
+      border: none;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+      border-color: transparent;
+      color: var(--primary-color);
+    }
+    
+    .nav-tabs .nav-link.active {
+      color: var(--primary-color);
+      background-color: transparent;
+      border: none;
+      border-bottom: 3px solid var(--primary-color);
+    }
+    
+    /* Card Styling */
+    .glass-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      padding: 1.75rem;
+    }
+    
+    .program-card {
+      max-width: 1200px;
+      margin: 2rem auto;
+    }
+    
+    /* Heading */
+    h2 {
+      font-weight: 600;
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 1.5rem;
+      font-size: 1.75rem;
+    }
+    
+    /* QR Code Section */
+    .qr-code-container {
+      background: rgba(248, 249, 250, 0.7);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+    
+    .qr-code-box {
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin: 0.5rem 0;
+    }
+    
+    .qr-controls {
+      text-align: center;
+      margin: 1.25rem 0;
+    }
+    
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 18px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .status-active {
+      background-color: rgba(76, 201, 240, 0.12);
+      color: var(--success-color);
+    }
+    
+    .status-inactive {
+      background-color: rgba(247, 37, 133, 0.12);
+      color: var(--danger-color);
+    }
+    
+    /* Nomination Status Badges */
+    .status-processing {
+      background-color: rgba(248, 150, 30, 0.12);
+      color: var(--warning-color);
+    }
+    
+    .status-accepted {
+      background-color: rgba(76, 201, 240, 0.12);
+      color: var(--success-color);
+    }
+    
+    .status-rejected {
+      background-color: rgba(247, 37, 133, 0.12);
+      color: var(--danger-color);
+    }
+    
+    /* Program Details */
+    .program-details dt {
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+    }
+    
+    .program-details dd {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    
+    .detail-item {
+      background: rgba(248, 249, 250, 0.5);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+    
+    /* Buttons */
+    .btn-custom {
+      border-radius: 6px;
+      padding: 0.6rem 1.25rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: none;
+      font-size: 0.85rem;
+    }
+    
+    .btn-primary-custom {
+      background: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary-custom:hover {
+      background: var(--secondary-color);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary-custom {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .btn-secondary-custom:hover {
+      background: #5a6268;
+      transform: translateY(-1px);
+    }
+    
+    .btn-danger-custom {
+      background: var(--danger-color);
+      color: white;
+    }
+    
+    .btn-success-custom {
+      background: var(--success-color);
+      color: white;
+    }
+    
+    /* Table Styling */
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+    
+    .table-title {
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 1.25rem;
+      font-size: 1.25rem;
+    }
+    
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    
+    .custom-table th {
+      background-color: #f8fafc;
+      padding: 0.85rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--dark-color);
+      border-bottom: 2px solid var(--border-color);
+    }
+    
+    .custom-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+    
+    .custom-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .custom-table tr:hover {
+      background-color: #f8fafc;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .btn-sm {
+      padding: 0.35rem 0.7rem;
+      font-size: 0.8rem;
+      border-radius: 4px;
+    }
+    
+    /* Factory Group Styling */
+    .factory-group {
+      margin-bottom: 2rem;
+    }
+    
+    .factory-header {
+      background-color: var(--light-color);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    
+    /* Nomination Stats Styling */
+    .nomination-stats {
+      margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+      border-radius: 10px;
+      padding: 1.25rem;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+      height: 100%;
+      transition: transform 0.2s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-3px);
+    }
+    
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--gray-color);
+      font-weight: 500;
+    }
+    
+    .factory-stat {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #f8fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .factory-name {
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    
+    .factory-count {
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 20px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .glass-card {
+        padding: 1.5rem;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .glass-card {
+        padding: 1.25rem;
+        margin: 1.5rem auto;
+      }
+      
+      .qr-code-container {
+        padding: 1.25rem;
+      }
+      
+      h2 {
+        font-size: 1.4rem;
+      }
+      
+      .nav-tabs .nav-link {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .glass-card {
+        padding: 1rem;
+        margin: 1rem auto;
+      }
+      
+      h2 {
+        font-size: 1.3rem;
+      }
+      
+      .table-container {
+        padding: 1rem;
+        overflow-x: auto;
+      }
+      
+      .custom-table {
+        font-size: 0.85rem;
+      }
+      
+      .custom-table th,
+      .custom-table td {
+        padding: 0.6rem 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-3">
+    <div class="program-card glass-card">
+      <h2><i class="fas fa-certificate me-2"></i>Training Program Details</h2>
+      
+      <!-- Tab Navigation -->
+      <ul class="nav nav-tabs" id="programTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="program-detail-tab" data-bs-toggle="tab" data-bs-target="#program-detail" type="button" role="tab" aria-controls="program-detail" aria-selected="true">
+            Program Detail
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="received-nomination-tab" data-bs-toggle="tab" data-bs-target="#received-nomination" type="button" role="tab" aria-controls="received-nomination" aria-selected="false">
+            Received Nomination
+          </button>
+        </li>
+      </ul>
+      
+      <!-- Tab Content -->
+      <div class="tab-content" id="programTabsContent">
+        <!-- Program Detail Tab -->
+        <div class="tab-pane fade show active" id="program-detail" role="tabpanel" aria-labelledby="program-detail-tab">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show d-flex align-items-center">
+                  <i class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                  <div>{{ message }}</div>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+          <div class="qr-controls">
+            <form action="{{ url_for('toggle_qr_status', program_id=program.id) }}" method="POST" class="mb-3">
+              <button type="submit" class="btn btn-custom {{ 'btn-success-custom' if program.qr_active else 'btn-danger-custom' }}">
+                <i class="fas {{ 'fa-toggle-on' if program.qr_active else 'fa-toggle-off' }} me-2"></i>
+                {{ "Deactivate QR Code" if program.qr_active else "Activate QR Code" }}
+              </button>
+            </form>
+            <p>
+              Current status: <span class="status-badge {{ 'status-active' if program.qr_active else 'status-inactive' }}">
+                <i class="fas {{ 'fa-check-circle' if program.qr_active else 'fa-times-circle' }} me-1"></i>
+                {{ "Active" if program.qr_active else "Inactive" }}
+              </span>
+            </p>
+          </div>
+          <div class="qr-code-container">
+            <div class="row">
+              <!-- Attendance QR -->
+              <div class="col-md-6 mb-4 mb-md-0 text-center">
+                <h5 class="qr-section-title"><i class="fas fa-user-check"></i>Attendance QR Code</h5>
+                <div class="qr-code-box">
+                  <img src="{{ url_for('get_qrcode', program_id=program.id) }}" 
+                       alt="Attendance QR Code" 
+                       class="img-fluid" style="max-width: 160px;" />
+                </div>
+                <div class="mt-3">
+                  <a href="{{ url_for('get_qrcode', program_id=program.id) }}" 
+                     download="attendance_qr_{{ program.id }}.png"
+                     class="btn btn-sm btn-primary-custom btn-custom">
+                    <i class="fas fa-download me-2"></i>Download QR Code
+                  </a>
+                </div>
+                <p class="validity-text mt-3">
+                  <i class="fas fa-calendar-alt me-2"></i>
+                  Valid from {{ program.formatted_start_date }} {{ program.formatted_start_time }} 
+                  to {{ program.formatted_end_date }} {{ program.formatted_end_time }}
+                </p>
+              </div>
+              <!-- Feedback QR -->
+              <div class="col-md-6 text-center">
+                <h5 class="qr-section-title"><i class="fas fa-comment-dots"></i>Feedback QR Code</h5>
+                <div class="qr-code-box">
+                  <img src="{{ url_for('get_qrcode', program_id=program.id, type='feedback') }}" 
+                       class="img-fluid" style="max-width: 160px;" 
+                       alt="Feedback QR Code" />
+                </div>
+                <div class="mt-3">
+                  <a href="{{ url_for('get_qrcode', program_id=program.id, type='feedback') }}" 
+                     download="feedback_qr_{{ program.id }}.png"
+                     class="btn btn-sm btn-primary-custom btn-custom">
+                    <i class="fas fa-download me-2"></i>Download QR Code
+                  </a>
+                </div>
+                <p class="validity-text mt-3">
+                  <i class="fas fa-info-circle me-2"></i>Scan to submit feedback
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="program-details mt-4">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <dt>Training Name:</dt>
+                  <dd>{{ program.training_name }}</dd>
+                </div>
+                
+                <div class="detail-item">
+                  <dt>Location Hall:</dt>
+                  <dd>{{ program.location_hall }}</dd>
+                </div>
+                
+                <div class="detail-item">
+                  <dt>Start Date/Time:</dt>
+                  <dd><i class="fas fa-calendar-day me-2"></i>{{ program.formatted_start_date }} at {{ program.formatted_start_time }}</dd>
+                </div>
+                
+                <div class="detail-item">
+                  <dt>End Date/Time:</dt>
+                  <dd><i class="fas fa-calendar-day me-2"></i>{{ program.formatted_end_date }} at {{ program.formatted_end_time }}</dd>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <dt>Learning Hours:</dt>
+                  <dd>{{ program.learning_hours }}</dd>
+                </div>
+                
+                <div class="detail-item">
+                  <dt>Program Type:</dt>
+                  <dd>{{ program.program_type }}</dd>
+                </div>
+                
+                <div class="detail-item">
+                  <dt>TNI Status:</dt>
+                  <dd>{{ program.tni_status }}</dd>
+                </div>
+                
+                <div class="detail-item">
+                  <dt>Faculty:</dt>
+                  <dd>
+                    <i class="fas fa-chalkboard-teacher me-2"></i>
+                    {% if program.faculty_1 %}{{ program.faculty_1 }}{% endif %}
+                    {% if program.faculty_2 %}, {{ program.faculty_2 }}{% endif %}
+                    {% if program.faculty_3 %}, {{ program.faculty_3 }}{% endif %}
+                    {% if program.faculty_4 %}, {{ program.faculty_4 }}{% endif %}
+                  </dd>
+                </div>
+                
+                <div class="detail-item">
+                  <dt>Created On:</dt>
+                  <dd><i class="fas fa-clock me-2"></i>{{ program.created_at.strftime('%d/%m/%Y %H:%M') if program.created_at else 'N/A' }}</dd>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary-custom btn-custom">
+              <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+          </div>
+        </div>
+        
+        <!-- Received Nomination Tab -->
+        <div class="tab-pane fade" id="received-nomination" role="tabpanel" aria-labelledby="received-nomination-tab">
+          <div class="table-container">
+            <h3 class="table-title">Received Nominations</h3>
+            
+            <div id="nominations-container">
+              <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading nominations...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load nominations when the tab is shown
+      const nominationTab = document.getElementById('received-nomination-tab');
+      if (nominationTab) {
+        nominationTab.addEventListener('shown.bs.tab', function() {
+          loadNominations();
+        });
+      }
+    });
+    
+    // Function to load nominations for the training program
+    function loadNominations() {
+      const trainingId = {{ program.id }};
+      const container = document.getElementById('nominations-container');
+      
+      // Show loading indicator
+      container.innerHTML = `
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading nominations...</p>
+        </div>
+      `;
+      
+      fetch(`/factory-data/get_nominations/${trainingId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Pass counts if available, otherwise pass an empty object
+            displayNominations(data.nominations, data.counts || {});
+          } else {
+            container.innerHTML = `
+              <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                ${data.message || 'Error loading nominations'}
+              </div>
+            `;
+          }
+        })
+        .catch(error => {
+          console.error('Error loading nominations:', error);
+          container.innerHTML = `
+            <div class="alert alert-danger">
+              <i class="fas fa-exclamation-circle me-2"></i>
+              Error loading nominations. Please try again.
+            </div>
+          `;
+        });
+    }
+    
+    // Function to display nominations grouped by factory
+    function displayNominations(nominations, counts) {
+      const container = document.getElementById('nominations-container');
+      
+      if (Object.keys(nominations).length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-4">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No nominations received yet</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Set default values if counts is undefined
+      const totalReceived = counts ? counts.total_received : 0;
+      const totalAccepted = counts ? counts.total_accepted : 0;
+      const factoryCounts = counts ? counts.factory_counts : {};
+      
+      let html = '';
+      
+      // Add nomination statistics
+      html += `
+        <div class="nomination-stats">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-value">${totalReceived}</div>
+                <div class="stat-label">Total Nominations Received</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-value">${totalAccepted}</div>
+                <div class="stat-label">Total Nominations Accepted</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-value">${totalReceived - totalAccepted}</div>
+                <div class="stat-label">Total Nominations Pending</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add factory nomination counts
+      html += '<div class="factory-stats">';
+      for (const [factory, count] of Object.entries(factoryCounts)) {
+        html += `
+          <div class="factory-stat">
+            <span class="factory-name"><i class="fas fa-industry me-2"></i>${factory}</span>
+            <span class="factory-count">${count} nominations</span>
+          </div>
+        `;
+      }
+      html += '</div>';
+      
+      // Add nomination tables
+      for (const [factory, factoryNominations] of Object.entries(nominations)) {
+        html += `
+          <div class="factory-group">
+            <div class="factory-header">
+              <i class="fas fa-industry me-2"></i>${factory}
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Per No</th>
+                    <th>Name</th>
+                    <th>SHE Hours</th>
+                    <th>Total Learning Hours</th>
+                    <th>Status</th>
+                    <th>Shared At</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        factoryNominations.forEach(nomination => {
+          const sharedAt = new Date(nomination.shared_at).toLocaleString();
+          const statusClass = nomination.status.toLowerCase();
+          
+          // Format SHE hours and total learning hours, defaulting to 0 if not available
+          const sheHours = nomination.she_hours || 0;
+          const totalLearningHours = nomination.total_learning_hours || 0;
+          
+          // Determine button states and labels
+          let acceptButtonClass = 'btn-outline-success';
+          let rejectButtonClass = 'btn-outline-danger';
+          let acceptButtonText = '<i class="fas fa-check"></i> Accept';
+          let rejectButtonText = '<i class="fas fa-times"></i> Reject';
+          
+          // If already accepted, then the accept button becomes solid and the reject button is enabled to change status
+          if (nomination.status === 'Accepted') {
+            acceptButtonClass = 'btn-success';
+            rejectButtonText = '<i class="fas fa-times"></i> Reject';
+          } else if (nomination.status === 'Rejected') {
+            rejectButtonClass = 'btn-danger';
+            acceptButtonText = '<i class="fas fa-check"></i> Accept';
+          }
+          
+          html += `
+            <tr>
+              <td>${nomination.per_no}</td>
+              <td>${nomination.name}</td>
+              <td>${sheHours}</td>
+              <td>${totalLearningHours}</td>
+              <td>
+                <span class="status-badge status-${statusClass}">
+                  ${nomination.status}
+                </span>
+              </td>
+              <td>${sharedAt}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-sm ${acceptButtonClass}" 
+                          onclick="updateNominationStatus(${nomination.id}, 'Accepted')">
+                    ${acceptButtonText}
+                  </button>
+                  <button class="btn btn-sm ${rejectButtonClass}" 
+                          onclick="updateNominationStatus(${nomination.id}, 'Rejected')">
+                    ${rejectButtonText}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        
+        html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+    }
+    
+    // Function to update nomination status
+    function updateNominationStatus(nominationId, status) {
+      fetch('/factory-data/update_nomination_status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nomination_id: nominationId,
+          status: status
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Reload nominations to reflect the update without showing a message
+          loadNominations();
+        } else {
+          alert(`Error: ${data.message || 'Failed to update nomination status'}`);
+        }
+      })
+      .catch(error => {
+        console.error('Error updating nomination status:', error);
+        alert('An error occurred while updating nomination status. Please try again.');
+      });
+    }
+  </script>
+</body>
+</html>

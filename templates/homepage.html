@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Capability Building Dashboard | TMCV</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --dark-overlay: rgba(0, 0, 0, 0.7);
+            --light-text: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.1);
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            color: var(--light-text);
+            overflow-x: hidden;
+        }
+        
+        .background-container {
+            /* FIXED: Changed from relative to absolute path */
+            background-image: url('/static/image/image.png');
+            background-size: cover;
+            background-position: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            /* ADDED: Fallback background color */
+            background-color: #1a1a1a;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.25);
+            z-index: -1;
+        }
+        .page-container {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .active-page {
+            display: block;
+        }
+        .alert-message {
+            display: none;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading-spinner {
+            display: none;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid var(--secondary-color);
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        /* Home Page Styles */
+        .home-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .title-container {
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-top: 2rem;
+        }
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .sub-title {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .org-title {
+            font-size: 1.5rem;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+        .login-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-top: 0rem;
+            width: 200px;
+        }
+        .login-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .signup-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+            width: 200px;
+        }
+        .signup-btn:hover {
+            background-color: #219653;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        /* Login Page Styles */
+        .login-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-box {
+            background-color: var(--dark-overlay);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        .login-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        .form-control:focus {
+            background-color: rgba(0, 0, 0, 0.76);
+            color: white;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        .login-btn-form {
+            width: 100%;
+            padding: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background-color: var(--secondary-color);
+            border: none;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        .login-btn-form:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .login-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .login-link {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+        .login-link:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        /* Signup and Forgot Password Pages */
+        .auth-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .auth-box {
+            background-color: var(--dark-overlay);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        .auth-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .back-to-login {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        .back-to-login:hover {
+            text-decoration: underline;
+        }
+        /* Factory Location Dropdown */
+        .factory-location-container {
+            display: none;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            padding: 0.5rem;
+            z-index: 10;
+        }
+        .back-btn:hover {
+            color: #2980b9;
+        }
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .alert {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2rem;
+            }
+            .sub-title {
+                font-size: 1.5rem;
+            }
+            .org-title {
+                font-size: 1.2rem;
+            }
+            .login-box, .auth-box {
+                padding: 1.5rem;
+            }
+            .login-links {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+            }
+        }
+        .reset-btn {
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 10;
+            display: block;
+            margin: 1rem auto 0 auto; /* centers it below login */
+            text-align: center;
+        }
+        .reset-btn:hover {
+            color: #2980b9;
+        }
+        .form-select:required:invalid {
+            border-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container"></div>
+    <div class="overlay"></div>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <!-- Home Page with Plants Section -->
+    <div id="home-page" class="page-container active-page">
+        <div class="home-page">
+            <div class="title-container">
+                <h1 class="main-title">Technician Capability Building Dashboard</h1>
+                <h2 class="sub-title">Skill Development Centre</h2>
+                <h3 class="org-title">TMCV</h3>
+            </div>
+            <button id="home-login-btn" class="login-btn">LOGIN</button>
+        </div>
+    </div>
+    <!-- Login Page -->
+    <div id="login-page" class="page-container">
+        <div class="login-page">
+            <div class="login-box">
+                <button type="button" class="back-btn" onclick="goBack()">← Back</button>
+                <h2 class="login-title">Login</h2>
+                <div id="login-error" class="alert-message alert-error"></div>
+                <div id="login-success" class="alert-message alert-success"></div>
+                
+                <form id="login-form" action="{{ url_for('user_auth.login') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="login-plant" class="form-label">Plant</label>
+                        <select class="form-select form-control" id="login-plant" name="plant_name" required>
+                            <option value="" selected disabled>Select Plant</option>
+                            <option value="ALL PLANTS">ALL PLANTS</option>
+                            <option value="PUNE PLANT">PUNE PLANT</option>
+                            <option value="JAMSHEDPUR PLANT">JAMSHEDPUR PLANT</option>
+                            <option value="LUCKNOW PLANT">LUCKNOW PLANT</option>
+                            <option value="PANTANAGAR PLANT">PANTANAGAR PLANT</option>
+                            <option value="DHARWAD PLANT">DHARWAD PLANT</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="login-role" class="form-label">Role</label>
+                        <select class="form-select form-control" id="login-role" name="role" required>
+                            <option value="" selected disabled>Select Role</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Corporate Skill Development Head">Corporate Skill Development Head</option>
+                            <option value="Plant Head">Plant Head</option>
+                            <option value="HR Head">HR Head</option>
+                            
+                            <option value="ER Officer">ER Officer</option>
+                            <option value="Factory Head">Factory Head</option>
+                            <option value="Skill Head">Skill Head</option>
+                            <option value="PSD">PSD</option>
+                            <option value="PSD Head">PSD Head</option>
+                            <option value="Shop Floor Training Coordinators">Shop Floor Training Coordinators</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 factory-location-container" id="login-factory-location-container">
+                        <label for="login-factory-location" class="form-label">Factory Location</label>
+                        <select class="form-select form-control" id="login-factory-location" name="factory_location">
+                            <option value="" selected disabled>Select Factory Location</option>
+                            {% if factory_locations %}
+                                {% for factory in factory_locations %}
+                                    <option value="{{ factory }}">{{ factory }}</option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="">No factories available</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="login-username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="login-username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="login-password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="login-password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn login-btn-form">
+                        <span class="btn-text">Login</span>
+                        <div class="loading-spinner"></div>
+                    </button>
+                    <button type="button" class="reset-btn" id="reset-form">Reset Form</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Factory locations array - fallback in case template variable isn't available
+        const FACTORY_LOCATIONS = [
+            'AXLE FACTORY', 'CCE-TS', 'CHINCHWAD FOUNDRY', 'CKD-SKD', 'CMS', 
+            'ENGINE FACTORY', 'ERC', 'GEAR FACTORY', 'HR FUNCTION', 
+            'J-11/12 PAINTSHOP', 'LAUNCH MANAGEMENT', 'LCV FACTORY', 
+            'M&HCV FACTORY', 'MATERIAL AUDIT', 'MAVAL FOUNDRY', 'PE', 'PPC', 
+            'PRESS & FRAME FACTORY', 'PTPA', 'QUALITY ASSURANCE', 'SCM', 
+            'Service Technical Support', 'WINGER FACTORY', 'XENON FACTORY'
+        ];
+        
+        // Function to populate factory location dropdown
+        function populateFactoryDropdown() {
+            const dropdown = document.getElementById('login-factory-location');
+            
+            // Clear existing options except the first one
+            while (dropdown.options.length > 1) {
+                dropdown.remove(1);
+            }
+            
+            // Add options from the array
+            FACTORY_LOCATIONS.forEach(factory => {
+                const option = document.createElement('option');
+                option.value = factory;
+                option.textContent = factory;
+                dropdown.appendChild(option);
+            });
+        }
+        
+        // Function to toggle factory location dropdown
+        function toggleFactoryLocation(roleSelect, containerId, dropdownId) {
+            const role = roleSelect.value;
+            const container = document.getElementById(containerId);
+            const dropdown = document.getElementById(dropdownId);
+            
+            // Show factory location dropdown for Factory Head, PSD, and Shop Floor Training Coordinators
+            if (role === 'Factory Head' || role === 'PSD' || role === 'Shop Floor Training Coordinators') {
+                container.style.display = 'block';
+                dropdown.setAttribute('required', 'true');
+                // Ensure dropdown is populated
+                if (dropdown.options.length <= 1) {
+                    populateFactoryDropdown();
+                }
+            } else {
+                container.style.display = 'none';
+                dropdown.removeAttribute('required');
+                dropdown.value = '';
+            }
+        }
+        
+        // Go back to home page
+        function goBack() {
+            document.querySelectorAll('.page-container').forEach(page => {
+                page.classList.remove('active-page');
+            });
+            document.getElementById('home-page').classList.add('active-page');
+        }
+        
+        // Reset form function
+        function resetForm() {
+            document.getElementById('login-form').reset();
+            document.getElementById('login-factory-location-container').style.display = 'none';
+            document.getElementById('login-error').style.display = 'none';
+            document.getElementById('login-success').style.display = 'none';
+        }
+        
+        // Page Navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure factory dropdown is populated on page load
+            populateFactoryDropdown();
+            
+            // Home to Login (when clicking Login button)
+            document.getElementById('home-login-btn').addEventListener('click', function() {
+                document.getElementById('home-page').classList.remove('active-page');
+                document.getElementById('login-page').classList.add('active-page');
+            });
+            
+            // Role change event listeners
+            document.getElementById('login-role').addEventListener('change', function() {
+                toggleFactoryLocation(this, 'login-factory-location-container', 'login-factory-location');
+                // Clear any previous error messages when role changes
+                document.getElementById('login-error').style.display = 'none';
+            });
+            
+            // Plant selection validation
+            document.getElementById('login-plant').addEventListener('change', function() {
+                const selectedPlant = this.value;
+                if (selectedPlant && selectedPlant !== "PUNE PLANT") {
+                    alert("Currently, only Pune Plant data is available.");
+                    this.value = "PUNE PLANT";
+                }
+            });
+            
+            // Reset form button
+            document.getElementById('reset-form').addEventListener('click', resetForm);
+            
+            // Check if there was a login error
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == 'error' %}
+                            document.getElementById('login-error').textContent = '{{ message }}';
+                            document.getElementById('login-error').style.display = 'block';
+                            // Show login page if there's an error
+                            document.getElementById('home-page').classList.remove('active-page');
+                            document.getElementById('login-page').classList.add('active-page');
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            // Form submissions
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                const form = this;
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const spinner = submitBtn.querySelector('.loading-spinner');
+                
+                // Validate plant selection
+                const plantSelect = document.getElementById('login-plant');
+                if (plantSelect.value && plantSelect.value !== "PUNE PLANT") {
+                    e.preventDefault();
+                    alert("Currently, only Pune Plant data is available.");
+                    plantSelect.value = "PUNE PLANT";
+                    return false;
+                }
+                
+                // Validate factory location if required
+                const roleSelect = document.getElementById('login-role');
+                const factoryContainer = document.getElementById('login-factory-location-container');
+                const factorySelect = document.getElementById('login-factory-location');
+                
+                if (factoryContainer.style.display === 'block' && !factorySelect.value) {
+                    e.preventDefault();
+                    // Show error message instead of alert
+                    const errorDiv = document.getElementById('login-error');
+                    errorDiv.textContent = "Factory Location is required for the selected role.";
+                    errorDiv.style.display = 'block';
+                    factorySelect.focus();
+                    return false;
+                }
+                
+                // Hide any previous messages
+                document.getElementById('login-error').style.display = 'none';
+                document.getElementById('login-success').style.display = 'none';
+                
+                // Form will submit normally to Flask backend
+                // The response will be handled by Flask's redirect
+            });
+            
+            // Auto-hide flash messages after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    alert.style.transition = 'opacity 0.5s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

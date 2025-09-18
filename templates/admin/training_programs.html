@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Training Programs</title>
+  <!-- Bootstrap CSS & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #f3f4f6, #e2e8f0);
+      color: #333;
+    }
+    .programs-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+    h2 {
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 30px;
+      color: #0d6efd;
+    }
+    .search-container {
+      background-color: #f1f5f9;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+    .form-label {
+      font-weight: 500;
+    }
+    .program-card {
+      border-left: 4px solid #0d6efd;
+      transition: box-shadow 0.3s ease;
+      cursor: pointer; /* Added cursor pointer */
+    }
+    .program-card:hover {
+      box-shadow: 0 8px 16px rgba(13, 110, 253, 0.2);
+    }
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .status-completed {
+      background-color: #d1e7dd;
+      color: #0f5132;
+    }
+    .status-scheduled {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .status-active {
+      background-color: #cfe2ff;
+      color: #084298;
+    }
+    .status-inactive {
+      background-color: #f8d7da;
+      color: #842029;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #f0f9ff;
+      transition: background-color 0.2s ease-in-out;
+    }
+    .btn-outline-primary:hover {
+      background-color: #0d6efd;
+      color: white;
+    }
+    .btn-outline-danger:hover {
+      background-color: #dc3545;
+      color: white;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #6c757d;
+      color: white;
+    }
+    .pagination {
+      justify-content: center;
+      margin-top: 30px;
+    }
+    .alert {
+      font-size: 0.95rem;
+    }
+    .modal-content {
+      border-radius: 10px;
+    }
+    .actions-column {
+      cursor: default; /* Reset cursor for actions column */
+    }
+  </style>
+</head>
+<body>
+  <div class="container programs-container">
+    <h2>Training Records</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <div class="search-container">
+      <form method="GET" action="{{ url_for('training_programs') }}" class="row g-3">
+        <div class="col-md-4">
+          <label for="location" class="form-label">Location Hall</label>
+          <select class="form-select" id="location" name="location">
+            <option value="">All Locations</option>
+            {% for location in location_halls %}
+              <option value="{{ location }}" {% if request.args.get('location') == location %}selected{% endif %}>
+                {{ location }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="status" class="form-label">Status</label>
+          <select class="form-select" id="status" name="status">
+            <option value="">All Statuses</option>
+            <option value="scheduled" {% if request.args.get('status') == 'scheduled' %}selected{% endif %}>Scheduled</option>
+            <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="search" class="form-label">Search</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="search" name="search"
+              placeholder="Search programs..." value="{{ request.args.get('search', '') }}">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Training Name</th>
+            <th>Location</th>
+            <th>Date & Time</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for program in programs %}
+            <tr class="program-card" data-program-id="{{ program.id }}">
+              <td>
+                <strong>{{ program.training_name }}</strong><br>
+                <small class="text-muted">{{ program.program_type }}</small>
+              </td>
+              <td>{{ program.location_hall }}</td>
+              <td>
+                {{ program.formatted_start_date }}<br>
+                {{ program.formatted_start_time }} - {{ program.formatted_end_time }}
+              </td>
+              <td>{{ program.learning_hours }} hours</td>
+              <td>
+                {% if program.end_date < current_date %}
+                  <span class="status-badge status-completed"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                {% else %}
+                  <span class="status-badge status-scheduled"><i class="bi bi-calendar-event"></i> Scheduled</span>
+                {% endif %}
+              </td>
+              <td class="actions-column">
+                <div class="btn-group" role="group">
+                  <a href="{{ url_for('view_program', program_id=program.id) }}" class="btn btn-sm btn-outline-primary view-btn" title="View">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete" data-id="{{ program.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  <a href="{{ url_for('get_qrcode', program_id=program.id) }}" class="btn btn-sm btn-outline-secondary" title="Download QR" download>
+                    <i class="bi bi-qr-code"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7" class="text-center py-4">No training programs found</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Program pagination">
+      <ul class="pagination">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('training_programs', **dict(request.args, page=pagination.prev_num)) }}">&laquo; Previous</a>
+        </li>
+        {% endif %}
+        {% for page_num in pagination.iter_pages() %}
+          {% if page_num %}
+            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('training_programs', **dict(request.args, page=page_num)) }}">{{ page_num }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('training_programs', **dict(request.args, page=pagination.next_num)) }}">Next &raquo;</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+  <!-- Delete Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Deletion</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this training program? This action cannot be undone.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <form id="deleteForm" method="POST" action="">
+            <button type="submit" class="btn btn-danger">Delete Program</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.querySelectorAll('.delete-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const programId = button.getAttribute('data-id');
+        const form = document.getElementById('deleteForm');
+        form.action = `/program/${programId}/delete`;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+      });
+    });
+
+    // Make entire row clickable except for action buttons
+    document.querySelectorAll('.program-card').forEach(row => {
+      row.addEventListener('click', function(event) {
+        // Check if the click is on the actions column
+        if (event.target.closest('.actions-column')) {
+          return; // Do nothing if clicking on actions
+        }
+        
+        // Get the view button in this row
+        const viewButton = this.querySelector('.view-btn');
+        if (viewButton) {
+          // Get the href from the view button and redirect
+          window.location.href = viewButton.getAttribute('href');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory Training Schedule</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Reset & Normalization */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        html {
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        
+        body {
+            line-height: 1.5;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: #2c3e50;
+        }
+        
+        img, picture, video, canvas, svg {
+            display: block;
+            max-width: 100%;
+        }
+        
+        input, button, textarea, select {
+            font: inherit;
+        }
+        
+        p, h1, h2, h3, h4, h5, h6 {
+            overflow-wrap: break-word;
+        }
+        
+        /* Design System Variables */
+        :root {
+            /* Colors - More vibrant and professional */
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --primary-light: #e0e7ff;
+            --secondary: #5f6368;
+            --secondary-light: #f8f9fa;
+            --accent: #f72585;
+            --accent-dark: #d90479;
+            --success: #06ffa5;
+            --warning: #ffbe0b;
+            --info: #4cc9f0;
+            --danger: #ff006e;
+            
+            /* Message colors - more vibrant */
+            --success-bg: #d1fae5;
+            --success-border: #06ffa5;
+            --success-text: #065f46;
+            --error-bg: #fee2e2;
+            --error-border: #ff006e;
+            --error-text: #991b1b;
+            
+            /* Neutral colors */
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            /* Status colors */
+            --status-scheduled: var(--warning);
+            --status-in-progress: var(--info);
+            --status-completed: var(--success);
+            --status-attended: var(--success);
+            --status-not-attended: var(--danger);
+            --status-processing: var(--warning);
+            --status-accepted: var(--success);
+            --status-rejected: var(--danger);
+            
+            /* Spacing */
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-5: 1.25rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            
+            /* Typography */
+            --text-xs: 0.75rem;
+            --text-sm: 0.875rem;
+            --text-base: 1rem;
+            --text-lg: 1.125rem;
+            --text-xl: 1.25rem;
+            --text-2xl: 1.5rem;
+            --text-3xl: 1.875rem;
+            
+            /* Borders */
+            --radius-sm: 0.25rem;
+            --radius: 0.5rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+            
+            /* Shadows */
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-md: 0 8px 15px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Base Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: var(--text-base);
+            color: var(--gray-800);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--white);
+            min-height: calc(100vh - 60px);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        /* Typography */
+        h2 {
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-3);
+            position: relative;
+            padding-left: var(--space-4);
+        }
+        
+        h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 70%;
+            width: 4px;
+            background: var(--primary);
+            border-radius: var(--radius);
+        }
+        
+        h3 {
+            font-size: var(--text-xl);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-3);
+            text-align: center;
+            position: relative;
+            padding-bottom: var(--space-2);
+        }
+        
+        h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: var(--radius);
+        }
+        
+        /* Navigation Bar - Enhanced */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            padding: var(--space-4) 0;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 var(--space-4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .navbar-brand {
+            font-size: var(--text-lg);
+            font-weight: 700;
+            color: var(--white);
+            text-decoration: none;
+            margin-right: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            transform: translateY(-2px);
+        }
+        
+        .navbar-brand i {
+            font-size: var(--text-xl);
+        }
+        
+        .tabs-container {
+            display: flex;
+            gap: var(--space-2);
+            flex-grow: 1;
+            justify-content: center;
+        }
+        
+        .menu-item {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            font-size: var(--text-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu-item i {
+            font-size: var(--text-base);
+        }
+        
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: width 0.3s ease;
+            z-index: -1;
+        }
+        
+        .menu-item:hover::before {
+            width: 100%;
+        }
+        
+        .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-left: var(--space-6);
+        }
+        
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        
+        .user-role {
+            font-weight: 600;
+            font-size: var(--text-sm);
+        }
+        
+        .user-factory {
+            font-size: var(--text-xs);
+            opacity: 0.9;
+        }
+        
+        .logout-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-size: var(--text-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .content-container {
+            padding: var(--space-6);
+        }
+        
+        /* Filter Section - Enhanced */
+        .filter-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: var(--space-6);
+            flex-wrap: wrap;
+            gap: var(--space-4);
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            background: var(--white);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+        }
+        
+        label {
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: var(--text-sm);
+        }
+        
+        select, input {
+            padding: var(--space-2) var(--space-3);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: var(--text-sm);
+            background-color: var(--white);
+            transition: all 0.3s ease;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        button {
+            padding: var(--space-2) var(--space-4);
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        button[type="submit"] {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            box-shadow: var(--shadow);
+        }
+        
+        button[type="submit"]:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        /* Tabs - Enhanced */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+            position: relative;
+        }
+        
+        .tab {
+            padding: var(--space-3) var(--space-5);
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: all 0.3s ease;
+            font-size: var(--text-base);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .tab i {
+            font-size: var(--text-lg);
+        }
+        
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.3s ease;
+        }
+        
+        .tab:hover {
+            color: var(--primary);
+        }
+        
+        .tab.active {
+            color: var(--primary);
+        }
+        
+        .tab.active::after {
+            width: 100%;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Empty State - Enhanced */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-8) var(--space-4);
+            color: var(--gray-500);
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+            border-radius: var(--radius-lg);
+            border: 1px dashed var(--gray-300);
+            margin: var(--space-6) 0;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+        
+        .empty-state:hover {
+            border-color: var(--gray-400);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-5px);
+        }
+        
+        .empty-state-icon {
+            font-size: var(--text-3xl);
+            margin-bottom: var(--space-4);
+            color: var(--primary);
+        }
+        
+        .empty-state-title {
+            font-size: var(--text-xl);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            color: var(--gray-700);
+        }
+        
+        .empty-state-description {
+            font-size: var(--text-base);
+        }
+        
+        /* Date Filter - Enhanced */
+        .date-filter-container {
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-4);
+            align-items: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+        }
+        
+        /* Tables - Enhanced */
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            margin: var(--space-6) 0;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        table:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+        }
+        
+        table th, table td {
+            padding: var(--space-3) var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: var(--text-sm);
+        }
+        
+        table th {
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            color: var(--gray-700);
+            font-weight: 600;
+            font-size: var(--text-sm);
+            position: sticky;
+            top: 0;
+            padding: var(--space-3) var(--space-4);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        table tr:hover {
+            background-color: var(--gray-50);
+        }
+        
+        /* Status Badges - Enhanced */
+        [class^="status-"] {
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: var(--text-xs);
+            display: inline-block;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        [class^="status-"]:hover {
+            transform: scale(1.05);
+        }
+        
+        .status-scheduled { 
+            background-color: rgba(255, 190, 11, 0.1);
+            color: var(--status-scheduled);
+            border: 1px solid rgba(255, 190, 11, 0.2);
+        }
+        
+        .status-in-progress { 
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--status-in-progress);
+            border: 1px solid rgba(76, 201, 240, 0.2);
+        }
+        
+        .status-completed, .status-attended { 
+            background-color: rgba(6, 255, 165, 0.1);
+            color: var(--status-completed);
+            border: 1px solid rgba(6, 255, 165, 0.2);
+        }
+        
+        .status-not-attended { 
+            background-color: rgba(255, 0, 110, 0.1);
+            color: var(--status-not-attended);
+            border: 1px solid rgba(255, 0, 110, 0.2);
+        }
+        
+        .status-processing {
+            background-color: rgba(255, 190, 11, 0.1);
+            color: var(--status-processing);
+            border: 1px solid rgba(255, 190, 11, 0.2);
+        }
+        
+        .status-accepted {
+            background-color: rgba(6, 255, 165, 0.1);
+            color: var(--status-accepted);
+            border: 1px solid rgba(6, 255, 165, 0.2);
+        }
+        
+        .status-rejected {
+            background-color: rgba(255, 0, 110, 0.1);
+            color: var(--status-rejected);
+            border: 1px solid rgba(255, 0, 110, 0.2);
+        }
+        
+        /* Training Details - Enhanced */
+        .training-details {
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            margin: var(--space-6) 0;
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+        
+        .training-details:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .detail-item {
+            background: var(--white);
+            padding: var(--space-4);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+        
+        .detail-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+        
+        .detail-item strong {
+            color: var(--gray-700);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .detail-item strong::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+        
+        /* Table Wrappers - Enhanced */
+        .tables-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-6);
+            margin: var(--space-6) 0;
+        }
+        
+        .table-wrapper {
+            flex: 1;
+            min-width: 300px;
+            background: var(--white);
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+        
+        .table-wrapper:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+        
+        .training-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* Buttons - Enhanced */
+        .btn-download {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: var(--white);
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-download:hover {
+            background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-share-nomination {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            font-size: var(--text-xs);
+            padding: var(--space-2) var(--space-3);
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-share-nomination:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        /* Utility Classes */
+        .center {
+            text-align: center;
+        }
+        
+        /* Attendance Tabs - Enhanced */
+        .attendance-tabs {
+            display: flex;
+            margin-bottom: var(--space-6);
+            border-bottom: 2px solid var(--gray-200);
+            justify-content: center;
+        }
+        
+        .attendance-tab {
+            padding: var(--space-3) var(--space-5);
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: all 0.3s ease;
+            font-size: var(--text-base);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .attendance-tab i {
+            font-size: var(--text-lg);
+        }
+        
+        .attendance-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.3s ease;
+        }
+        
+        .attendance-tab:hover {
+            color: var(--primary);
+        }
+        
+        .attendance-tab.active {
+            color: var(--primary);
+        }
+        
+        .attendance-tab.active::after {
+            width: 100%;
+        }
+        
+        /* Message/Alert Styles - Enhanced */
+        .message {
+            padding: var(--space-4);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-6);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            animation: slideDown 0.5s ease;
+            box-shadow: var(--shadow);
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .message-success {
+            background: linear-gradient(135deg, var(--success-bg) 0%, rgba(209, 250, 229, 0.5) 100%);
+            color: var(--success-text);
+            border-left: 4px solid var(--success-border);
+        }
+        
+        .message-error {
+            background: linear-gradient(135deg, var(--error-bg) 0%, rgba(254, 226, 226, 0.5) 100%);
+            color: var(--error-text);
+            border-left: 4px solid var(--error-border);
+        }
+        
+        .message-icon {
+            font-size: var(--text-xl);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .navbar-container {
+                flex-direction: column;
+                gap: var(--space-4);
+            }
+            
+            .tabs-container {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .user-info {
+                order: 2;
+                width: 100%;
+                justify-content: space-between;
+                margin-left: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .navbar-brand {
+                margin-right: 0;
+                margin-bottom: var(--space-3);
+            }
+            
+            .tabs-container {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: var(--space-2);
+            }
+            
+            .menu-item {
+                padding: var(--space-2) var(--space-3);
+                font-size: var(--text-xs);
+            }
+            
+            .user-info {
+                flex-direction: column;
+                align-items: center;
+                gap: var(--space-2);
+            }
+            
+            .user-details {
+                align-items: center;
+                text-align: center;
+            }
+            
+            body {
+                padding: 0;
+            }
+            
+            .content-container {
+                padding: var(--space-4);
+            }
+            
+            .tables-container {
+                flex-direction: column;
+            }
+            
+            .filter-section, .date-filter-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-2);
+            }
+            
+            .tab {
+                padding: var(--space-2) var(--space-3);
+                font-size: var(--text-sm);
+                flex: 1;
+                text-align: center;
+            }
+            
+            .attendance-tabs {
+                flex-direction: column;
+                border-bottom: none;
+                gap: var(--space-2);
+            }
+            
+            .attendance-tab {
+                border-radius: var(--radius);
+                border: 1px solid var(--gray-200);
+                margin-bottom: 0;
+            }
+            
+            .attendance-tab.active {
+                border-bottom: 1px solid var(--gray-200);
+                border-bottom-color: var(--primary);
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .navbar {
+                display: none;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            
+            .filter-section, .tabs, button {
+                display: none;
+            }
+            
+            .tab-content {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" onclick="return false;" class="navbar-brand">
+                <i class="fas fa-industry"></i>
+                Technician Capability Building Dashboard
+            </a>
+            
+            <div class="tabs-container">
+                <a href="{{ url_for('user_tech_bp.view_master_data') }}" 
+                   class="menu-item {% if request.endpoint == 'user_tech_bp.view_master_data' %}active{% endif %}">
+                   <i class="fas fa-chart-line"></i>
+                   Live Digital Dashboard
+                </a>
+                <a href="{{ url_for('factory_data.factory_data') }}" 
+                   class="menu-item {% if request.endpoint == 'factory_data.factory_data' %}active{% endif %}">
+                    <i class="fas fa-graduation-cap"></i>
+                    Training Management
+                </a>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-details">
+                    <span class="user-role">{{ session.get('role', '') }}</span>
+                    <span class="user-factory">{{ session.get('factory_location', '') }}</span>
+                </div>
+                <a href="{{ url_for('user_auth.logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="content-container">
+            <!-- Always show both tabs - centered -->
+            <div class="tabs">
+                <div class="tab active" data-tab="scheduled">
+                    <i class="fas fa-calendar-alt"></i>
+                    Upcoming Events
+                </div>
+                <div class="tab" data-tab="completed">
+                    <i class="fas fa-check-circle"></i>
+                    Completed Events
+                </div>
+            </div>
+            
+            <!-- Scheduled & In-Progress Tab -->
+            <div class="tab-content active" id="scheduled-tab">
+                <h3 class="center">Upcoming Scheduled & In-Progress Events</h3>
+                
+                {% if scheduled_trainings %}
+                <div class="training-list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Training Name</th>
+                                <th>Location</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Time</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for training in scheduled_trainings %}
+                                <tr>
+                                    <td>{{ training.training_name }}</td>
+                                    <td>{{ training.location_hall }}</td>
+                                    <td>{{ training.formatted_start_date }}</td>
+                                    <td>{{ training.formatted_end_date }}</td>
+                                    <td>{{ training.formatted_start_time }} - {{ training.formatted_end_time }}</td>
+                                    <td>{{ training.duration_days }} day(s)</td>
+                                    <td>
+                                        <span class="status-{{ training.status|lower|replace(' ', '-') }}">
+                                            {{ training.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="POST" style="display: inline;" data-tab="scheduled">
+                                            <input type="hidden" name="training_id" value="{{ training.id }}">
+                                            <button type="submit">
+                                                <i class="fas fa-eye"></i>
+                                                View Details
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <div class="empty-state-title">No Training Scheduled</div>
+                    <div class="empty-state-description">There are no upcoming or in-progress trainings at this time.</div>
+                </div>
+                {% endif %}
+            </div>  
+            <!-- Completed Trainings Tab -->
+            <div class="tab-content" id="completed-tab">
+                <h3 class="center">Completed Events</h3>
+                
+                <div class="date-filter-container">
+                    <div class="filter-group">
+                        <label for="start-date">
+                            <i class="fas fa-calendar-day"></i>
+                            From:
+                        </label>
+                        <input type="date" id="start-date" name="start_date">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="end-date">
+                            <i class="fas fa-calendar-day"></i>
+                            To:
+                        </label>
+                        <input type="date" id="end-date" name="end_date">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="month">
+                            <i class="fas fa-calendar-alt"></i>
+                            Or select month:
+                        </label>
+                        <input type="month" id="month" name="month">
+                    </div>
+                    
+                    <button type="button" id="apply-filter">
+                        <i class="fas fa-filter"></i>
+                        Apply Filter
+                    </button>
+                    <button type="button" id="reset-filter">
+                        <i class="fas fa-redo"></i>
+                        Reset Filter
+                    </button>
+                </div>
+                
+                {% if completed_trainings %}
+                <div class="training-list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Training Name</th>
+                                <th>Location</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for training in completed_trainings %}
+                                <tr>
+                                    <td>{{ training.training_name }}</td>
+                                    <td>{{ training.location_hall }}</td>
+                                    <td>{{ training.formatted_start_date }}</td>
+                                    <td>{{ training.formatted_end_date }}</td>
+                                    <td>{{ training.duration_days }} day(s)</td>
+                                    <td>
+                                        <span class="status-{{ training.status|lower|replace(' ', '-') }}">
+                                            {{ training.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="POST" style="display: inline;" data-tab="completed">
+                                            <input type="hidden" name="training_id" value="{{ training.id }}">
+                                            <button type="submit">
+                                                <i class="fas fa-eye"></i>
+                                                View Details
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div class="empty-state-title">No Completed Trainings</div>
+                    <div class="empty-state-description">There are no completed trainings in the selected period.</div>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if training_details %}
+            <div class="training-details">
+                <h3 class="center">Training Details: {{ training_details.training_name }}</h3>
+                
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <p><strong>Status:</strong> 
+                            <span class="status-{{ completion_status|lower|replace(' ', '-') }}">
+                                {{ completion_status }}
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <p><strong>Location:</strong> {{ training_details.location_hall }}</p>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <p><strong>Date:</strong> {{ training_details.formatted_start_date }} to {{ training_details.formatted_end_date }}</p>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <p><strong>Time:</strong> {{ training_details.formatted_start_time }} - {{ training_details.formatted_end_time }}</p>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <p><strong>Duration:</strong> {{ training_details.duration_days }} day(s)</p>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <p><strong>Learning Hours:</strong> {{ training_details.learning_hours }} hours</p>
+                    </div>
+                </div>
+                
+                <!-- Show appropriate tabs based on training status -->
+                {% if completion_status == 'Completed' %}
+                <!-- For completed trainings, show both tabs but default to "Not Attended" -->
+                <div class="attendance-tabs">
+                    <div class="attendance-tab" data-attendance-tab="completed-employees">
+                        <i class="fas fa-user-check"></i>
+                        Completed Employees
+                    </div>
+                    <div class="attendance-tab active" data-attendance-tab="not-attended">
+                        <i class="fas fa-user-times"></i>
+                        Not Attended
+                    </div>
+                </div>
+                
+                <!-- Not Attended Tab (Default Active) -->
+                <div class="tab-content active" id="not-attended-tab">
+                    {% if attendance_data %}
+                    <div class="table-wrapper">
+                        <h3 class="center">Employees Who Did Not Attend</h3>
+                        <div class="training-list">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Per No</th>
+                                        <th>Name</th>
+                                        <th>Training Name</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in attendance_data if row.status == 'Not Attended' %}
+                                        <tr>
+                                            <td>{{ row.per_no }}</td>
+                                            <td>{{ row.name }}</td>
+                                            <td>{{ row.training_name }}</td>
+                                            <td>
+                                                <span class="status-{{ row.status|lower|replace(' ', '-') }}">
+                                                    {{ row.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <form method="POST" action="/factory-data/download" class="center">
+                            <input type="hidden" name="training_id" value="{{ selected_training_id }}">
+                            <button type="submit" class="btn-download">
+                                <i class="fas fa-download"></i>
+                                Download Not Attended List
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="empty-state-title">All Employees Attended</div>
+                        <div class="empty-state-description">All employees attended this training.</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Completed Employees Tab -->
+                <div class="tab-content" id="completed-employees-tab">
+                    {% if completed_employees %}
+                    <div class="table-wrapper">
+                        <h3 class="center">Employees Who Completed This Training</h3>
+                        <div class="training-list">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Per No</th>
+                                        <th>Name</th>
+                                        <th>Training Period</th>
+                                        <th>Learning Hours</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for employee in completed_employees %}
+                                        <tr>
+                                            <td>{{ employee.per_no }}</td>
+                                            <td>{{ employee.name }}</td>
+                                            <td>{{ employee.start_date }} to {{ employee.end_date }}</td>
+                                            <td>{{ employee.learning_hours or 'N/A' }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-user-slash"></i>
+                        </div>
+                        <div class="empty-state-title">No Completed Employees</div>
+                        <div class="empty-state-description">No employees have completed this training yet.</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <!-- For non-completed trainings, only show "Not Attended" tab -->
+                <div class="attendance-tabs">
+                    <div class="attendance-tab active" data-attendance-tab="not-attended">
+                        <i class="fas fa-user-times"></i>
+                        Not Attended
+                    </div>
+                </div>
+                
+                <!-- Not Attended Tab -->
+                <div class="tab-content active" id="not-attended-tab">
+                    {% if attendance_data %}
+                    <div class="table-wrapper">
+                        <h3 class="center">Employees Who Did Not Attend</h3>
+                        <div class="training-list">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Per No</th>
+                                        <th>Name</th>
+                                        <th>Training Name</th>
+                                        <th>Status</th>
+                                        <th>Nomination</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in attendance_data if row.status == 'Not Attended' %}
+                                        <tr>
+                                            <td>{{ row.per_no }}</td>
+                                            <td>{{ row.name }}</td>
+                                            <td>{{ row.training_name }}</td>
+                                            <td>
+                                                <span class="status-{{ row.status|lower|replace(' ', '-') }}">
+                                                    {{ row.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div id="nomination-{{ row.per_no }}-{{ training_details.id }}">
+                                                    {% if row.nomination_status %}
+                                                        <span class="status-{{ row.nomination_status|lower }}">
+                                                            {{ row.nomination_status }}
+                                                        </span>
+                                                    {% else %}
+                                                        <button class="btn-share-nomination" 
+                                                                data-per-no="{{ row.per_no }}"
+                                                                data-name="{{ row.name }}"
+                                                                data-factory="{{ selected_factory }}"
+                                                                data-training-id="{{ training_details.id }}"
+                                                                data-training-name="{{ training_details.training_name }}">
+                                                            <i class="fas fa-share-alt"></i>
+                                                            Share Nomination
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <form method="POST" action="/factory-data/download" class="center">
+                            <input type="hidden" name="training_id" value="{{ selected_training_id }}">
+                            <button type="submit" class="btn-download">
+                                <i class="fas fa-download"></i>
+                                Download Not Attended List
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="empty-state-title">All Employees Attended</div>
+                        <div class="empty-state-description">All employees attended this training.</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Always set the first tab as active on page load
+            const firstTab = document.querySelector('.tab[data-tab="scheduled"]');
+            if (firstTab) {
+                firstTab.classList.add('active');
+                document.getElementById('scheduled-tab').classList.add('active');
+                
+                // Remove active class from other tabs
+                document.querySelectorAll('.tab[data-tab="completed"]').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById('completed-tab').classList.remove('active');
+            }
+            
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // Add click event to tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+            
+            // Attendance tabs functionality
+            const attendanceTabs = document.querySelectorAll('.attendance-tab');
+            
+            attendanceTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-attendance-tab');
+                    
+                    // Remove active class from all attendance tabs and contents
+                    attendanceTabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Find all attendance tab contents (not the main tab contents)
+                    const attendanceTabContents = document.querySelectorAll('#not-attended-tab, #completed-employees-tab');
+                    attendanceTabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+            
+            // Date filter functionality
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const monthInput = document.getElementById('month');
+            const applyFilterBtn = document.getElementById('apply-filter');
+            const resetFilterBtn = document.getElementById('reset-filter');
+            
+            if (applyFilterBtn) {
+                applyFilterBtn.addEventListener('click', applyDateFilter);
+            }
+            
+            if (resetFilterBtn) {
+                resetFilterBtn.addEventListener('click', resetDateFilter);
+            }
+            
+            // Sync month and date inputs
+            if (monthInput && startDateInput && endDateInput) {
+                monthInput.addEventListener('change', function() {
+                    if (this.value) {
+                        const [year, month] = this.value.split('-');
+                        const firstDay = new Date(year, month - 1, 1);
+                        const lastDay = new Date(year, month, 0);
+                        
+                        startDateInput.value = formatDate(firstDay);
+                        endDateInput.value = formatDate(lastDay);
+                    }
+                });
+                
+                startDateInput.addEventListener('change', syncMonthInput);
+                endDateInput.addEventListener('change', syncMonthInput);
+            }
+            
+            // Add event listeners to nomination buttons
+            const nominationButtons = document.querySelectorAll('.btn-share-nomination');
+            nominationButtons.forEach(button => {
+                button.addEventListener('click', handleShareNomination);
+            });
+            
+            // Handle form submissions to preserve tab state
+            const forms = document.querySelectorAll('form[data-tab]');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    const tab = this.getAttribute('data-tab');
+                    // Store active tab in sessionStorage
+                    sessionStorage.setItem('activeTrainingTab', tab);
+                });
+            });
+            
+            // Initialize attendance tabs - ensure the default active tab is displayed
+            initializeAttendanceTabs();
+        });
+        
+        function initializeAttendanceTabs() {
+            // Find the active attendance tab
+            const activeTab = document.querySelector('.attendance-tab.active');
+            if (activeTab) {
+                const tabId = activeTab.getAttribute('data-attendance-tab');
+                const tabContent = document.getElementById(`${tabId}-tab`);
+                if (tabContent) {
+                    // Make sure this tab content is active
+                    tabContent.classList.add('active');
+                }
+            }
+        }
+        
+        function applyDateFilter() {
+            // This would typically be handled server-side
+            // For demonstration, we'll just show a message
+            showMessage('Filter applied successfully', 'success');
+        }
+        
+        function resetDateFilter() {
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const monthInput = document.getElementById('month');
+            
+            if (startDateInput) startDateInput.value = '';
+            if (endDateInput) endDateInput.value = '';
+            if (monthInput) monthInput.value = '';
+            
+            // Show reset message
+            showMessage('Filter has been reset', 'success');
+        }
+        
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        }
+        
+        function syncMonthInput() {
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const monthInput = document.getElementById('month');
+            
+            if (startDateInput.value && endDateInput.value) {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                
+                // Check if both dates are in the same month and year
+                if (startDate.getMonth() === endDate.getMonth() && 
+                    startDate.getFullYear() === endDate.getFullYear()) {
+                    
+                    const year = startDate.getFullYear();
+                    const month = String(startDate.getMonth() + 1).padStart(2, '0');
+                    
+                    monthInput.value = `${year}-${month}`;
+                } else {
+                    monthInput.value = '';
+                }
+            }
+        }
+        
+        // Handle share nomination button click
+        function handleShareNomination(event) {
+            const button = event.target;
+            const perNo = button.getAttribute('data-per-no');
+            const name = button.getAttribute('data-name');
+            const factory = button.getAttribute('data-factory');
+            const trainingId = button.getAttribute('data-training-id');
+            const trainingName = button.getAttribute('data-training-name');
+            
+            // Disable button to prevent multiple clicks
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sharing...';
+            
+            // Send nomination data to server
+            fetch('/factory-data/share_nomination', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    per_no: perNo,
+                    name: name,
+                    factory: factory,
+                    training_id: trainingId,
+                    training_name: trainingName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI to show processing status
+                    const nominationDiv = document.getElementById(`nomination-${perNo}-${trainingId}`);
+                    nominationDiv.innerHTML = `<span class="status-processing">Processing</span>`;
+                    
+                    // Show success message
+                    showMessage('Nomination shared successfully!', 'success');
+                } else {
+                    // Re-enable button and show error
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-share-alt"></i> Share Nomination';
+                    showMessage(data.message || 'Error sharing nomination', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-share-alt"></i> Share Nomination';
+                showMessage('Network error. Please try again.', 'error');
+            });
+        }
+        
+        // Show message with red/green colors
+        function showMessage(message, type) {
+            // Remove any existing messages
+            const existingMessages = document.querySelectorAll('.message');
+            existingMessages.forEach(msg => msg.remove());
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            
+            const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+            
+            messageDiv.innerHTML = `
+                <span class="message-icon">${icon}</span>
+                <span>${message}</span>
+            `;
+            
+            // Insert at the top of content container
+            const contentContainer = document.querySelector('.content-container');
+            contentContainer.insertBefore(messageDiv, contentContainer.firstChild);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                messageDiv.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => messageDiv.remove(), 500);
+            }, 3000);
+        }
+        
+        // Auto-refresh status for in-progress trainings
+        function refreshTrainingStatus() {
+            const trainingRows = document.querySelectorAll('tr[data-training-id]');
+            trainingRows.forEach(row => {
+                const trainingId = row.getAttribute('data-training-id');
+                fetch(`/factory-data/get_training_status/${trainingId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const statusCell = row.querySelector('.training-status');
+                        if (statusCell) {
+                            statusCell.textContent = data.status;
+                            statusCell.className = `status-${data.status.toLowerCase().replace(' ', '-')}`;
+                        }
+                    });
+            });
+        }
+        // Refresh every minute for in-progress trainings
+        setInterval(refreshTrainingStatus, 60000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Capability Building Dashboard | TMCV</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --dark-overlay: rgba(0, 0, 0, 0.7);
+            --light-text: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.1);
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            color: var(--light-text);
+            overflow-x: hidden;
+        }
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('/static/image.png') no-repeat center center;
+            background-size: cover;
+            z-index: -2;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.25);
+            z-index: -1;
+        }
+        .page-container {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .active-page {
+            display: block;
+        }
+        .alert-message {
+            display: none;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading-spinner {
+            display: none;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid var(--secondary-color);
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        /* Home Page Styles */
+        .home-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .title-container {
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .main-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .sub-title {
+            font-size: 2rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .org-title {
+            font-size: 1.8rem;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+        .login-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+        }
+        .login-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Login Page Styles */
+        .login-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-box {
+            background-color: var(--dark-overlay);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .login-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        .form-control:focus {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        .login-btn-form {
+            width: 100%;
+            padding: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background-color: var(--secondary-color);
+            border: none;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+        .login-btn-form:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .login-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .login-link {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+        .login-link:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        .signup-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 2.5rem;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+        }
+        .signup-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        /* Signup and Forgot Password Pages */
+        .auth-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .auth-box {
+            background-color: var(--dark-overlay);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .auth-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .back-to-login {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--secondary-color);
+            text-decoration: null;
+        }
+        .back-to-login:hover {
+            text-decoration: underline;
+        }
+        /* Factory Location Dropdown */
+        .factory-location-container {
+            display: none;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            padding: 0.5rem;
+        }
+        .back-btn:hover {
+            color: #2980b9;
+        }
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.5rem;
+            }
+            .sub-title {
+                font-size: 1.8rem;
+            }
+            .org-title {
+                font-size: 1.5rem;
+            }
+            .plants-grid {
+                flex-direction: column;
+                align-items: center;
+            }
+            .plant-card {
+                width: 80%;
+            }
+            .login-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container"></div>
+    <div class="overlay"></div>
+    <!-- Home Page with Plants Section -->
+    <div id="home-page" class="page-container active-page">
+        <div class="home-page">
+            <div class="title-container">
+                <h1 class="main-title">Technician Capability Building Dashboard</h1>
+                <h2 class="sub-title">Skill Development Centre</h2>
+                <h3 class="org-title">TMCV</h3>
+            </div>
+            <button id="home-login-btn" class="login-btn">LOGIN</button>
+            <button id="home-signup-btn" class="signup-btn">SIGN UP</button>
+        </div>
+    </div>
+    <!-- Login Page -->
+    <div id="login-page" class="page-container">
+        <div class="login-page">
+            <div class="login-box">
+                <button type="button" class="back-btn" onclick="goBack()">← Back</button>
+                <br>
+                <h2 class="login-title">Login</h2>
+                <div id="login-error" class="alert-message alert-error"></div>
+                <div id="login-success" class="alert-message alert-success"></div>
+                
+                <form id="login-form" action="/login" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="plant-selection" class="form-label">Plant</label>
+                        <select class="form-select form-control" id="login-plant" name="plant_name" required>
+                            <option value="" selected disabled>Select Plant</option>
+                            <option value="PUNE PLANT">PUNE PLANT</option>
+                            <option value="JAMSHEDPUR PLANT">JAMSHEDPUR PLANT</option>
+                            <option value="LUCKNOW PLANT">LUCKNOW PLANT</option>
+                            <option value="PANTANAGAR PLANT">PANTANAGAR PLANT</option>
+                            <option value="DHARWAD PLANT">DHARWAD PLANT</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select form-control" id="login-role" name="role_name" required>
+                            <option value="" selected disabled>Select Role</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Corporate Skill Development Head">Corporate Skill Development Head</option>
+                            <option value="Plant Head">Plant Head</option>
+                            <option value="HR Head">HR Head</option>
+                            <option value="Factory Head">Factory Head</option>
+                            <option value="PSD">PSD</option>
+                            <option value="Shop Floor Training Coordinators">Shop Floor Training Coordinators</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 factory-location-container" id="login-factory-location-container">
+                        <label for="factory-location" class="form-label">Factory Location</label>
+                        <select class="form-select form-control" id="login-factory-location" name="factory_location">
+                            <option value="" selected disabled>Select Factory Location</option>
+                            <!-- Factory locations will be populated here by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username or Email</label>
+                        <input type="text" class="form-control" id="login-username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="login-password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn login-btn-form">
+                        <span class="btn-text">Login</span>
+                        <div class="loading-spinner"></div>
+                    </button>
+                    <div class="login-links">
+                        <a href="#" class="login-link" id="signup-link">Sign Up</a>
+                        <a href="#" class="login-link" id="forgot-password-link">Forgot Password?</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Signup Page -->
+    <div id="signup-page" class="page-container">
+        <div class="auth-page">
+            <div class="auth-box">
+                <button type="button" class="back-btn" onclick="goBack()">← Back</button>
+                <br>
+                <h2 class="auth-title">Create Account</h2>
+                <div id="signup-error" class="alert-message alert-error"></div>
+                <div id="signup-success" class="alert-message alert-success"></div>
+                
+                <form id="signup-form" action="/signup" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="plant-selection" class="form-label">Plant</label>
+                        <select class="form-select form-control" id="signup-plant" name="plant_name" required>
+                            <option value="" selected disabled>Select Plant</option>
+                            <option value="PUNE PLANT">PUNE PLANT</option>
+                            <option value="JAMSHEDPUR PLANT">JAMSHEDPUR PLANT</option>
+                            <option value="LUCKNOW PLANT">LUCKNOW PLANT</option>
+                            <option value="PANTANAGAR PLANT">PANTANAGAR PLANT</option>
+                            <option value="DHARWAD PLANT">DHARWAD PLANT</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="signup-role" class="form-label">Role</label>
+                        <select class="form-select form-control" id="signup-role" name="role_name" required>
+                            <option value="" selected disabled>Select Role</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Corporate Skill Development Head">Corporate Skill Development Head</option>
+                            <option value="Plant Head">Plant Head</option>
+                            <option value="HR Head">HR Head</option>
+                            <option value="Factory Head">Factory Head</option>
+                            <option value="PSD">PSD</option>
+                            <option value="Shop Floor Training Coordinators">Shop Floor Training Coordinators">
+                        </select>
+                    </div>
+                    <div class="mb-3 factory-location-container" id="signup-factory-location-container">
+                        <label for="factory-location" class="form-label">Factory Location</label>
+                        <select class="form-select form-control" id="signup-factory-location" name="factory_location">
+                            <option value="" selected disabled>Select Factory Location</option>
+                            <!-- Factory locations will be populated here by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="signup-ticket" class="form-label">Ticket No.</label>
+                        <input type="text" class="form-control" id="signup-ticket" name="ticket_no">
+                    </div>
+                    <div class="mb-3">
+                        <label for="signup-username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="signup-username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="signup-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="signup-email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="signup-password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="signup-password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="signup-confirm-password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="signup-confirm-password" name="confirm_password" required>
+                    </div>
+                    <button type="submit" class="btn login-btn-form">
+                        <span class="btn-text">Create Account</span>
+                        <div class="loading-spinner"></div>
+                    </button>
+                    <a href="#" class="back-to-login" id="back-to-login-from-signup">Back to Login</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Forgot Password Page -->
+    <div id="forgot-password-page" class="page-container">
+        <div class="auth-page">
+            <div class="auth-box">
+                <button type="button" class="back-btn" onclick="goBack()">← Back</button>
+                <br>
+                <h2 class="auth-title">Reset Password</h2>
+                <div id="forgot-error" class="alert-message alert-error"></div>
+                <div id="forgot-success" class="alert-message alert-success"></div>
+                
+                <form id="forgot-password-form" action="/forgot_password" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="reset-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="reset-email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reset-ticket" class="form-label">Ticket No.</label>
+                        <input type="text" class="form-control" id="reset-ticket" name="ticket_no" required>
+                    </div>
+                    <button type="submit" class="btn login-btn-form">
+                        <span class="btn-text">Reset Password</span>
+                        <div class="loading-spinner"></div>
+                    </button>
+                    <a href="#" class="back-to-login" id="back-to-login-from-forgot">Back to Login</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Factory locations will be populated from the server
+        // Function to populate factory location dropdowns
+        function populateFactoryLocations() {
+            // Get factory locations from the server (passed via Jinja2)
+            const factoryLocations = {{ factory_locations|tojson }};
+            
+            // Populate login dropdown
+            const loginDropdown = document.getElementById('login-factory-location');
+            loginDropdown.innerHTML = '<option value="" selected disabled>Select Factory Location</option>';
+            factoryLocations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                loginDropdown.appendChild(option);
+            });
+            
+            // Populate signup dropdown
+            const signupDropdown = document.getElementById('signup-factory-location');
+            signupDropdown.innerHTML = '<option value="" selected disabled>Select Factory Location</option>';
+            factoryLocations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                signupDropdown.appendChild(option);
+            });
+        }
+        
+        // Function to toggle factory location dropdown
+        function toggleFactoryLocation(roleSelect, containerId) {
+            const role = roleSelect.value;
+            const container = document.getElementById(containerId);
+            
+            if (role === 'Factory Head' || role === 'Shop Floor Training Coordinators') {
+                container.style.display = 'block';
+                container.querySelector('select').required = true;
+            } else {
+                container.style.display = 'none';
+                container.querySelector('select').required = false;
+                container.querySelector('select').value = '';
+            }
+        }
+        
+        // Make all plant cards clickable and store selection
+        document.querySelectorAll('.plant-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const plantName = this.getAttribute('data-plant');
+                document.getElementById('home-page').classList.remove('active-page');
+                document.getElementById('login-page').classList.add('active-page');
+                document.querySelector('.login-title').textContent = `Login to ${plantName}`;
+                document.getElementById('login-plant').value = plantName;
+            });
+        });
+        
+        // Page Navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Populate factory locations from server data
+            populateFactoryLocations();
+            
+            // Home to Login (when clicking Login button)
+            document.getElementById('home-login-btn').addEventListener('click', function() {
+                document.getElementById('home-page').classList.remove('active-page');
+                document.getElementById('login-page').classList.add('active-page');
+            });
+            
+            // Home to Signup (when clicking Signup button)
+            document.getElementById('home-signup-btn').addEventListener('click', function() {
+                document.getElementById('home-page').classList.remove('active-page');
+                document.getElementById('signup-page').classList.add('active-page');
+            });
+            
+            // Login to Signup
+            document.getElementById('signup-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('login-page').classList.remove('active-page');
+                document.getElementById('signup-page').classList.add('active-page');
+            });
+            
+            // Login to Forgot Password
+            document.getElementById('forgot-password-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('login-page').classList.remove('active-page');
+                document.getElementById('forgot-password-page').classList.add('active-page');
+            });
+            
+            // Back to Login from Signup
+            document.getElementById('back-to-login-from-signup').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('signup-page').classList.remove('active-page');
+                document.getElementById('login-page').classList.add('active-page');
+            });
+            
+            // Back to Login from Forgot Password
+            document.getElementById('back-to-login-from-forgot').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('forgot-password-page').classList.remove('active-page');
+                document.getElementById('login-page').classList.add('active-page');
+            });
+            
+            // Role change event listeners
+            document.getElementById('login-role').addEventListener('change', function() {
+                toggleFactoryLocation(this, 'login-factory-location-container');
+            });
+            
+            document.getElementById('signup-role').addEventListener('change', function() {
+                toggleFactoryLocation(this, 'signup-factory-location-container');
+            });
+            
+            // Form submissions
+            document.getElementById('login-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const form = this;
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const spinner = submitBtn.querySelector('.loading-spinner');
+                
+                // Show loading state
+                btnText.textContent = 'Logging in...';
+                spinner.style.display = 'block';
+                submitBtn.disabled = true;
+                
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        document.getElementById('login-error').style.display = 'none';
+                        document.getElementById('login-success').textContent = data.message || 'Login successful!';
+                        document.getElementById('login-success').style.display = 'block';
+                        
+                        // Redirect after a short delay
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 1000);
+                    } else {
+                        document.getElementById('login-success').style.display = 'none';
+                        document.getElementById('login-error').textContent = data.message || 'Login failed. Please try again.';
+                        document.getElementById('login-error').style.display = 'block';
+                        
+                        // Reset button state
+                        btnText.textContent = 'Login';
+                        spinner.style.display = 'none';
+                        submitBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('login-error').textContent = 'An error occurred. Please try again.';
+                    document.getElementById('login-error').style.display = 'block';
+                    
+                    // Reset button state
+                    btnText.textContent = 'Login';
+                    spinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            });
+            
+            document.getElementById('signup-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const form = this;
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const spinner = submitBtn.querySelector('.loading-spinner');
+                
+                // Validate passwords match
+                const password = document.getElementById('signup-password').value;
+                const confirmPassword = document.getElementById('signup-confirm-password').value;
+                
+                if (password !== confirmPassword) {
+                    document.getElementById('signup-error').textContent = 'Passwords do not match';
+                    document.getElementById('signup-error').style.display = 'block';
+                    return;
+                }
+                
+                // Show loading state
+                btnText.textContent = 'Creating Account...';
+                spinner.style.display = 'block';
+                submitBtn.disabled = true;
+                
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        document.getElementById('signup-error').style.display = 'none';
+                        document.getElementById('signup-success').textContent = data.message || 'Account created successfully!';
+                        document.getElementById('signup-success').style.display = 'block';
+                        
+                        // Redirect to login after a short delay
+                        setTimeout(() => {
+                            document.getElementById('signup-page').classList.remove('active-page');
+                            document.getElementById('login-page').classList.add('active-page');
+                        }, 2000);
+                    } else {
+                        document.getElementById('signup-success').style.display = 'none';
+                        document.getElementById('signup-error').textContent = data.message || 'Account creation failed. Please try again.';
+                        document.getElementById('signup-error').style.display = 'block';
+                    }
+                    
+                    // Reset button state
+                    btnText.textContent = 'Create Account';
+                    spinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('signup-error').textContent = 'An error occurred. Please try again.';
+                    document.getElementById('signup-error').style.display = 'block';
+                    
+                    // Reset button state
+                    btnText.textContent = 'Create Account';
+                    spinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            });
+            
+            document.getElementById('forgot-password-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const form = this;
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const spinner = submitBtn.querySelector('.loading-spinner');
+                
+                // Show loading state
+                btnText.textContent = 'Processing...';
+                spinner.style.display = 'block';
+                submitBtn.disabled = true;
+                
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        document.getElementById('forgot-error').style.display = 'none';
+                        document.getElementById('forgot-success').textContent = data.message || 'Password reset instructions sent to your email.';
+                        document.getElementById('forgot-success').style.display = 'block';
+                    } else {
+                        document.getElementById('forgot-success').style.display = 'none';
+                        document.getElementById('forgot-error').textContent = data.message || 'Password reset failed. Please try again.';
+                        document.getElementById('forgot-error').style.display = 'block';
+                    }
+                    
+                    // Reset button state
+                    btnText.textContent = 'Reset Password';
+                    spinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('forgot-error').textContent = 'An error occurred. Please try again.';
+                    document.getElementById('forgot-error').style.display = 'block';
+                    
+                    // Reset button state
+                    btnText.textContent = 'Reset Password';
+                    spinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+        
+        function goBack() {
+            // Go back to home page from any other page
+            document.querySelectorAll('.page-container').forEach(page => {
+                page.classList.remove('active-page');
+            });
+            document.getElementById('home-page').classList.add('active-page');
+        }
+    </script>
+</body>
+</html>

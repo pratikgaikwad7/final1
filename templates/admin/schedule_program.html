@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Training Program</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --accent-color: #fd79a8;
+            --dark-color: #2d3436;
+            --light-color: #f8f9fa;
+            --success-color: #00b894;
+            --warning-color: #fdcb6e;
+            --danger-color: #d63031;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .form-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h2 {
+            color: var(--dark-color);
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        h2:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-bottom: none;
+            padding: 12px 15px;
+            font-weight: 600;
+        }
+        
+        .card-header h5 {
+            margin: 0;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .card-body {
+            padding: 18px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .form-control, .form-select {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            height: auto;
+            font-size: 0.9rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.2);
+        }
+        
+        .input-group-text {
+            background-color: white;
+            border-radius: 0 6px 6px 0;
+            border-left: none;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .faculty-input {
+            margin-bottom: 12px;
+        }
+        
+        .duration-display {
+            min-width: 100px;
+            display: inline-block;
+            color: var(--primary-color);
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            width: 1.2rem;
+            height: 1.2rem;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .required-field::after {
+            content: " *";
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+        
+        .auto-fill-field {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        
+        .form-check-inline {
+            margin-right: 12px;
+        }
+        
+        .form-check-label {
+            position: relative;
+            padding-left: 26px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .form-check-label:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 1px;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+        }
+        
+        .form-check-label:after {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 7px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+        
+        .alert {
+            border-radius: 6px;
+            padding: 12px 16px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 15px;
+                margin: 15px auto;
+            }
+            
+            .card-body {
+                padding: 15px;
+            }
+            
+            .col-md-4, .col-md-3, .col-md-6 {
+                margin-bottom: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+{% include 'admin/navbar.html' %}
+    <div class="container">
+        <div class="form-container">
+            <h2 class="mb-4 text-center">Schedule New Training Program</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show">
+                            <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('schedule_program') }}" id="trainingForm">
+                <!-- TNI Status Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Program Type</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label required-field">TNI Status</label>
+                            <div>
+                                {% for option in tni_options %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="tni_status" id="tni_{{ loop.index }}" value="{{ option }}" 
+                                            {% if request.form.get('tni_status') == option %}checked{% else %}{% if loop.first and not request.form %}checked{% endif %}{% endif %} required
+                                            onchange="loadTrainingNames(this.value)">
+                                        <label class="form-check-label" for="tni_{{ loop.index }}">{{ option }}</label>
+                                    </div>
+                                {% endfor %}
+                                <span id="loading_spinner" class="loading-spinner spinner-border spinner-border-sm text-primary" role="status"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Information Section -->
+                <div class="card mb-4" id="training_name_container">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-book me-2"></i>Training Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="training_name" class="form-label required-field">Training Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <select class="form-select" id="training_name" name="training_name" required>
+                                    <option value="">Select Training Program</option>
+                                    {% for training in training_data %}
+                                        <option value="{{ training.Training_Name }}" 
+                                            data-pmo="{{ training.PMO_Training_Category }}"
+                                            data-pl="{{ training.PL_Category }}"
+                                            data-brsr="{{ training.BRSR_SQ_123_Category }}"
+                                            data-hours="{{ training.learning_hours }}"
+                                            {% if request.form.get('training_name') == training.Training_Name %}selected{% endif %}>
+                                            {{ training.Training_Name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="pmo_training_category" class="form-label">PMO Training Category</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                    <input type="text" class="form-control auto-fill-field" id="pmo_training_category" name="pmo_training_category" 
+                                        value="{{ request.form.get('pmo_training_category', '') }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="pl_category" class="form-label">PL Category</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                    <input type="text" class="form-control auto-fill-field" id="pl_category" name="pl_category" 
+                                        value="{{ request.form.get('pl_category', '') }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="brsr_sq_123_category" class="form-label">BRSR SQ 1,2,3 Category</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                    <input type="text" class="form-control auto-fill-field" id="brsr_sq_123_category" name="brsr_sq_123_category" 
+                                        value="{{ request.form.get('brsr_sq_123_category', '') }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Information Section -->
+                <div class="card mb-4" id="schedule_info_container" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="far fa-calendar-alt me-2"></i>Schedule Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="location_hall" class="form-label required-field">Location Hall</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                <select class="form-select" id="location_hall" name="location_hall" required>
+                                    <option value="">Select Training Location</option>
+                                    {% for location in location_halls %}
+                                        <option value="{{ location }}" {% if request.form.get('location_hall') == location %}selected{% endif %}>
+                                            {{ location }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="start_date" class="form-label required-field">Start Date</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-calendar"></i></span>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                                        value="{{ request.form.get('start_date', '') }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="duration_days" class="form-label required-field">Duration (Days)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                    <select class="form-select" id="duration_days" name="duration_days" required>
+                                        <option value="">Select Duration</option>
+                                        <option value="1" {% if request.form.get('duration_days') == '1' %}selected{% endif %}>1 Day</option>
+                                        <option value="2" {% if request.form.get('duration_days') == '2' %}selected{% endif %}>2 Days</option>
+                                        <option value="3" {% if request.form.get('duration_days') == '3' %}selected{% endif %}>3 Days</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="start_time" class="form-label required-field">Start Time</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                    <select class="form-select" id="start_time" name="start_time" required>
+                                        <option value="">Select Time</option>
+                                        {% for time in time_slots %}
+                                            <option value="{{ time }}" {% if request.form.get('start_time') == time %}selected{% endif %}>{{ time }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="end_time" class="form-label required-field">End Time</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                    <select class="form-select" id="end_time" name="end_time" required>
+                                        <option value="">Select Time</option>
+                                        {% for time in time_slots %}
+                                            <option value="{{ time }}" {% if request.form.get('end_time') == time %}selected{% endif %}>{{ time }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="learning_hours" class="form-label">Total Learning Hours</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-hourglass-half"></i></span>
+                                    <input type="number" class="form-control auto-fill-field" id="learning_hours" name="learning_hours" 
+                                        min="1" step="1" value="{{ request.form.get('learning_hours', '') }}" 
+                                        placeholder="Auto-filled from training data" readonly>
+                                    <span class="input-group-text">
+                                        <span class="duration-display" id="duration_display">
+                                            {% if request.form.get('learning_hours') %}
+                                                {% set hours = request.form.get('learning_hours')|float %}
+                                                {% if hours <= 8 %}
+                                                    ({{ hours|int }} hours)
+                                                {% else %}
+                                                    ({{ (hours//8)|int }} day{% if (hours//8)|int > 1 %}s{% endif %}
+                                                    {% if (hours%8) > 0 %}
+                                                         + {{ (hours%8)|int }} hours
+                                                    {% endif %})
+                                                {% endif %}
+                                            {% endif %}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">Calculated End Date</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-calendar"></i></span>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" 
+                                        value="{{ request.form.get('end_date', '') }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Program Details Section -->
+                <div class="card mb-4" id="program_details_container" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Program Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="program_type" class="form-label required-field">Program Type</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tasks"></i></span>
+                                <select class="form-select" id="program_type" name="program_type" required>
+                                    <option value="">Select Program Type</option>
+                                    {% for ptype in program_types %}
+                                        <option value="{{ ptype }}" {% if request.form.get('program_type') == ptype %}selected{% endif %}>{{ ptype }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-chalkboard-teacher me-1"></i>Faculty</label>
+                            <div class="row">
+                                <div class="col-md-3 faculty-input">
+                                    <div class="input-group">
+                                        <span class="input-group-text">1</span>
+                                        <input type="text" class="form-control" name="faculty_1" 
+                                            value="{{ request.form.get('faculty_1', '') }}" placeholder="Faculty Name">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 faculty-input">
+                                    <div class="input-group">
+                                        <span class="input-group-text">2</span>
+                                        <input type="text" class="form-control" name="faculty_2" 
+                                            value="{{ request.form.get('faculty_2', '') }}" placeholder="Faculty Name">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 faculty-input">
+                                    <div class="input-group">
+                                        <span class="input-group-text">3</span>
+                                        <input type="text" class="form-control" name="faculty_3" 
+                                            value="{{ request.form.get('faculty_3', '') }}" placeholder="Faculty Name">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 faculty-input">
+                                    <div class="input-group">
+                                        <span class="input-group-text">4</span>
+                                        <input type="text" class="form-control" name="faculty_4" 
+                                            value="{{ request.form.get('faculty_4', '') }}" placeholder="Faculty Name">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4" id="form_buttons" style="display: none;">
+                    <button type="reset" class="btn btn-outline-secondary me-md-2">
+                        <i class="fas fa-undo me-1"></i>Reset Form
+                    </button>
+                    <button type="submit" class="btn btn-primary me-md-2">
+                        <i class="fas fa-calendar-plus me-1"></i>Schedule Program
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // Initialize date pickers
+        const startDatePicker = flatpickr("#start_date", {
+            minDate: "today",
+            dateFormat: "Y-m-d",
+            onChange: function(selectedDates, dateStr) {
+                if (dateStr) {
+                    updateEndDateBasedOnDuration();
+                }
+            }
+        });
+        
+        const endDatePicker = flatpickr("#end_date", {
+            dateFormat: "Y-m-d",
+            minDate: "today"
+        });
+
+        // Function to update end date based on duration
+        function updateEndDateBasedOnDuration() {
+            const startDate = document.getElementById('start_date').value;
+            const durationDays = parseInt(document.getElementById('duration_days').value) || 1;
+            
+            if (!startDate) return;
+            
+            const startDateObj = new Date(startDate);
+            const endDateObj = new Date(startDateObj);
+            
+            // Calculate end date based on duration
+            endDateObj.setDate(startDateObj.getDate() + durationDays - 1);
+            
+            // Format the end date as YYYY-MM-DD
+            const endDateStr = endDateObj.toISOString().split('T')[0];
+            document.getElementById('end_date').value = endDateStr;
+            endDatePicker.setDate(endDateStr);
+        }
+
+        // Function to update duration display
+        function updateDurationDisplay(hours) {
+            const durationDisplay = document.getElementById('duration_display');
+            if (!hours) {
+                durationDisplay.textContent = '';
+                return;
+            }
+
+            hours = parseFloat(hours);
+            if (hours <= 8) {
+                durationDisplay.textContent = `(${Math.round(hours)} hours)`;
+            } else {
+                const days = Math.floor(hours / 8);
+                const remainingHours = hours % 8;
+                let displayText = `(${days} day${days > 1 ? 's' : ''}`;
+                if (remainingHours > 0) {
+                    displayText += ` + ${Math.round(remainingHours)} hours`;
+                }
+                displayText += ')';
+                durationDisplay.textContent = displayText;
+            }
+        }
+
+        // Function to load training names based on TNI status
+        function loadTrainingNames(tniStatus) {
+            const loadingSpinner = document.getElementById('loading_spinner');
+            const trainingSelect = document.getElementById('training_name');
+            
+            // Show loading spinner
+            loadingSpinner.style.display = 'inline-block';
+            
+            // Clear current options except the first one
+            trainingSelect.innerHTML = '<option value="">Select Training Program</option>';
+            
+            // Make AJAX call to get training names based on TNI status
+            fetch(`/get_training_names?tni_status=${encodeURIComponent(tniStatus)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    data.forEach(training => {
+                        const option = document.createElement('option');
+                        option.value = training.Training_Name;
+                        option.textContent = training.Training_Name;
+                        
+                        // Set data attributes
+                        option.dataset.pmo = training.PMO_Training_Category || '';
+                        option.dataset.pl = training.PL_Category || '';
+                        option.dataset.brsr = training.BRSR_SQ_123_Category || '';
+                        option.dataset.hours = training.learning_hours || '';
+                        
+                        if (training.Training_Name === "{{ request.form.get('training_name', '') }}") {
+                            option.selected = true;
+                            setTimeout(() => trainingSelect.dispatchEvent(new Event('change')), 100);
+                        }
+                        
+                        trainingSelect.appendChild(option);
+                    });
+                    
+                    document.getElementById('training_name_container').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error loading training names:', error);
+                    alert('Failed to load training programs. Please try again.');
+                })
+                .finally(() => {
+                    loadingSpinner.style.display = 'none';
+                });
+        }
+
+        // Auto-fill training details when training name is selected
+        document.getElementById('training_name').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const fields = {
+                'pmo_training_category': selectedOption.dataset.pmo || '',
+                'pl_category': selectedOption.dataset.pl || '',
+                'brsr_sq_123_category': selectedOption.dataset.brsr || '',
+                'learning_hours': selectedOption.dataset.hours || ''
+            };
+            
+            // Update the fields
+            Object.entries(fields).forEach(([id, value]) => {
+                document.getElementById(id).value = value;
+            });
+            
+            // Update duration display
+            updateDurationDisplay(selectedOption.dataset.hours);
+            
+            // Set duration days based on learning hours (8 hours per day)
+            if (selectedOption.dataset.hours) {
+                const hours = parseFloat(selectedOption.dataset.hours);
+                const days = Math.min(3, Math.max(1, Math.ceil(hours / 8)));
+                document.getElementById('duration_days').value = days;
+                updateEndDateBasedOnDuration();
+            }
+            
+            // Show the rest of the form
+            document.getElementById('schedule_info_container').style.display = 'block';
+            document.getElementById('program_details_container').style.display = 'block';
+            document.getElementById('form_buttons').style.display = 'flex';
+        });
+
+        // Event listeners for duration changes
+        document.getElementById('duration_days').addEventListener('change', function() {
+            if (document.getElementById('start_date').value) {
+                updateEndDateBasedOnDuration();
+            }
+        });
+
+        // Form validation
+        document.getElementById('trainingForm').addEventListener('submit', function(e) {
+            const startDate = new Date(document.getElementById('start_date').value);
+            const endDate = new Date(document.getElementById('end_date').value);
+            
+            if (startDate > endDate) {
+                e.preventDefault();
+                alert('End date must be after start date');
+                return false;
+            }
+            
+            // Validate duration is between 1-3 days
+            const duration = parseInt(document.getElementById('duration_days').value);
+            if (duration < 1 || duration > 3) {
+                e.preventDefault();
+                alert('Duration must be between 1-3 days');
+                return false;
+            }
+            
+            return true;
+        });
+
+        // Initialize form based on current state
+        document.addEventListener('DOMContentLoaded', function() {
+            const tniStatus = "{{ request.form.get('tni_status', 'TNI') }}";
+            
+            // If form was submitted with errors, reload the appropriate data
+            if (tniStatus && "{{ request.method }}" === "POST") {
+                loadTrainingNames(tniStatus);
+                
+                // Show all sections since we're restoring a submitted form
+                document.getElementById('schedule_info_container').style.display = 'block';
+                document.getElementById('program_details_container').style.display = 'block';
+                document.getElementById('form_buttons').style.display = 'flex';
+                
+                // Trigger change event if training is already selected
+                if (document.getElementById('training_name').value) {
+                    document.getElementById('training_name').dispatchEvent(new Event('change'));
+                }
+            } else {
+                // For new forms, show the training name section by default
+                document.getElementById('training_name_container').style.display = 'block';
+                
+                // If a training is already selected (from form errors), show the rest of the form
+                if (document.getElementById('training_name').value) {
+                    document.getElementById('training_name').dispatchEvent(new Event('change'));
+                    document.getElementById('schedule_info_container').style.display = 'block';
+                    document.getElementById('program_details_container').style.display = 'block';
+                    document.getElementById('form_buttons').style.display = 'flex';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

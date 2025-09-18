@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Training Target Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #0b4485ff;
+            --primary-dark: #2c5f9e;
+            --secondary-color: #f0f0f0;
+            --success-color: #d4edda;
+            --success-text: #155724;
+            --error-color: #f8d7da;
+            --error-text: #721c24;
+            --highlight-yellow: #fff78c;
+            --highlight-brown: #e6b899;
+            --highlight-green: #c7fccb;
+            --row-highlight-light: #e6f2ff;
+            --row-highlight-dark: #cce5ff;
+            --border-color: #bfc9d7;
+            --text-dark: #333;
+            --text-light: #fff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background: #f8fafc;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        table {
+            border-collapse: separate;
+            width: 100%;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        .wide-cell { 
+            width: 220px; 
+            text-align: left; 
+            font-weight: 500;
+        }
+        
+        th {
+            background: var(--primary-color);
+            color: var(--text-light);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--primary-dark);
+        }
+        
+        tr:not(.total-row):not(.grand-total-row):hover td {
+            background-color: rgba(57, 125, 204, 0.1);
+        }
+        
+        .total-row {
+            background-color: var(--row-highlight-light);
+            font-weight: 600;
+        }
+        
+        .grand-total-row {
+            background-color: var(--row-highlight-dark);
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+        
+        .yellow-field { 
+            background: var(--highlight-yellow);
+            font-weight: 600;
+        }
+        
+        .brown-field  { 
+            background: var(--highlight-brown);
+            font-weight: 600;
+        }
+        
+        .green-field  { 
+            background: var(--highlight-green);
+            font-weight: 600;
+        }
+        
+        .year-selector {
+            margin: 25px 0;
+            padding: 15px;
+            background: var(--secondary-color);
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .year-selector label {
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        
+        .year-selector select {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .year-selector select:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .year-selector select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(57, 125, 204, 0.2);
+        }
+        
+        .flash-message {
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .flash-success {
+            background: var(--success-color);
+            color: var(--success-text);
+            border-left: 4px solid #28a745;
+        }
+        
+        .flash-error {
+            background: var(--error-color);
+            color: var(--error-text);
+            border-left: 4px solid #dc3545;
+        }
+        
+        button {
+            padding: 10px 18px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .edit-button {
+            margin: 25px 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        /* Zebra striping */
+        tbody tr:nth-child(odd):not(.total-row):not(.grand-total-row) {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        tbody tr:nth-child(even):not(.total-row):not(.grand-total-row) {
+            background-color: rgba(240, 244, 248, 0.8);
+        }
+        
+        /* Month columns styling */
+        td:nth-child(n+12):nth-child(-n+23) {
+            font-weight: 500;
+            background-color: rgba(240, 248, 255, 0.7);
+        }
+        
+        /* First column sticky */
+        @media (min-width: 1200px) {
+            th:first-child, td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 5;
+            }
+            
+            th:first-child {
+                z-index: 15;
+            }
+            
+            .total-row td:first-child, .grand-total-row td:first-child {
+                background-color: inherit;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Training Target Dashboard</h1>
+
+    <!-- Year selector -->
+    <div class="year-selector">
+        <form method="get" action="{{ url_for('target.dashboard') }}">
+            <label for="target_year">Select Year:</label>
+            <select name="target_year" id="target_year" onchange="this.form.submit()">
+                {% for year in available_years %}
+                    <option value="{{ year }}" {% if year == target_year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Action buttons -->
+    <div class="edit-button">
+        <a href="{{ url_for('target.edit_data', target_year=target_year) }}">
+            <button type="button">Edit Data</button>
+        </a>
+    </div>
+
+    <!-- Data table -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th class="wide-cell">Training Name</th>
+                <th>PMO Category</th>
+                <th>PL Category</th>
+                <th>TNI</th>
+                <th>Batch Size</th>
+                <th>Target</th>
+                <th>YTD Target</th>
+                <th>YTD Actual</th>
+                <th>Balance</th>
+                <th>Prog to Run</th>
+                <th>April</th>
+                <th>May</th>
+                <th>June</th>
+                <th>July</th>
+                <th>August</th>
+                <th>September</th>
+                <th>October</th>
+                <th>November</th>
+                <th>December</th>
+                <th>January</th>
+                <th>February</th>
+                <th>March</th>
+                <th>Target Year</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Regular rows -->
+            {% for training in trainings if not training.is_total_row and not training.is_grand_total_row %}
+            <tr>
+                <td>{{ training.display_id }}</td>
+                <td class="wide-cell">{{ training.training_name }}</td>
+                <td>{{ training.pmo_category }}</td>
+                <td>{{ training.pl_category }}</td>
+                <td>{{ training.tni or 0 }}</td>
+                <td>{{ training.batch_size or '' }}</td>
+                <td>{{ training.target or '' }}</td>
+                <td>{{ training.ytd_target or 0 }}</td>
+                <td class="green-field">{{ training.ytd_actual or 0 }}</td>
+                <td class="brown-field">{{ training.balance or 0 }}</td>
+                <td class="yellow-field">{{ training.programs_to_run or 0 }}</td>
+                <td>{{ training.april or 0 }}</td>
+                <td>{{ training.may or 0 }}</td>
+                <td>{{ training.june or 0 }}</td>
+                <td>{{ training.july or 0 }}</td>
+                <td>{{ training.august or 0 }}</td>
+                <td>{{ training.september or 0 }}</td>
+                <td>{{ training.october or 0 }}</td>
+                <td>{{ training.november or 0 }}</td>
+                <td>{{ training.december or 0 }}</td>
+                <td>{{ training.january or 0 }}</td>
+                <td>{{ training.february or 0 }}</td>
+                <td>{{ training.march or 0 }}</td>
+                <td>{{ training.target_year or target_year }}</td>
+            </tr>
+            {% endfor %}
+
+            <!-- Total row(s) -->
+            {% for training in trainings if training.is_total_row %}
+            <tr class="total-row">
+                <td></td>
+                <td class="wide-cell">{{ training.training_name }}</td>
+                <td>{{ training.pmo_category }}</td>
+                <td>{{ training.pl_category }}</td>
+                <td>{{ training.tni or 0 }}</td>
+                <td>{{ training.batch_size or '' }}</td>
+                <td>{{ training.target or '' }}</td>
+                <td>{{ training.ytd_target or 0 }}</td>
+                <td class="green-field">{{ training.ytd_actual or 0 }}</td>
+                <td class="brown-field">{{ training.balance or 0 }}</td>
+                <td class="yellow-field">{{ training.programs_to_run or 0 }}</td>
+                <td>{{ training.april or 0 }}</td>
+                <td>{{ training.may or 0 }}</td>
+                <td>{{ training.june or 0 }}</td>
+                <td>{{ training.july or 0 }}</td>
+                <td>{{ training.august or 0 }}</td>
+                <td>{{ training.september or 0 }}</td>
+                <td>{{ training.october or 0 }}</td>
+                <td>{{ training.november or 0 }}</td>
+                <td>{{ training.december or 0 }}</td>
+                <td>{{ training.january or 0 }}</td>
+                <td>{{ training.february or 0 }}</td>
+                <td>{{ training.march or 0 }}</td>
+                <td>{{ training.target_year or target_year }}</td>
+            </tr>
+            {% endfor %}
+
+            <!-- Grand total row -->
+            {% for training in trainings if training.is_grand_total_row %}
+            <tr class="grand-total-row">
+                <td></td>
+                <td class="wide-cell">{{ training.training_name }}</td>
+                <td>{{ training.pmo_category }}</td>
+                <td>{{ training.pl_category }}</td>
+                <td>{{ training.tni or 0 }}</td>
+                <td>{{ training.batch_size or '' }}</td>
+                <td>{{ training.target or '' }}</td>
+                <td>{{ training.ytd_target or 0 }}</td>
+                <td class="green-field">{{ training.ytd_actual or 0 }}</td>
+                <td class="brown-field">{{ training.balance or 0 }}</td>
+                <td class="yellow-field">{{ training.programs_to_run or 0 }}</td>
+                <td>{{ training.april or 0 }}</td>
+                <td>{{ training.may or 0 }}</td>
+                <td>{{ training.june or 0 }}</td>
+                <td>{{ training.july or 0 }}</td>
+                <td>{{ training.august or 0 }}</td>
+                <td>{{ training.september or 0 }}</td>
+                <td>{{ training.october or 0 }}</td>
+                <td>{{ training.november or 0 }}</td>
+                <td>{{ training.december or 0 }}</td>
+                <td>{{ training.january or 0 }}</td>
+                <td>{{ training.february or 0 }}</td>
+                <td>{{ training.march or 0 }}</td>
+                <td>{{ training.target_year or target_year }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

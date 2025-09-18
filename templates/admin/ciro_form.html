@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>टाटा मोटर्स - प्रशिक्षण अभिप्राय फॉर्म</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #003366;
+            --secondary-color: #0066cc;
+            --accent-color: #ff6b00;
+            --accent-light: #ff8c33;
+            --light-bg: #f8fafc;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s ease;
+            --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #004080 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, #0080ff 100%);
+            --gradient-accent: linear-gradient(135deg, var(--accent-color) 0%, #ff8c33 100%);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 15px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 15px auto;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            position: relative;
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+            padding-bottom: 35px;
+        }
+        
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--card-shadow);
+            border: 3px solid #fff;
+            overflow: hidden;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .header-logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .header-logo img {
+            width: 150%;
+            height: auto;
+            display: block;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+        }
+        
+        .header h2 {
+            font-size: 16px;
+            font-weight: 400;
+            margin-bottom: 5px;
+        }
+        
+        .form-container {
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e6ed;
+        }
+        
+        .section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid var(--secondary-color);
+            position: relative;
+            font-weight: 600;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 80px;
+            height: 3px;
+            background-color: var(--accent-color);
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -8px 12px;
+        }
+        
+        .form-group {
+            flex: 1 0 100%;
+            padding: 0 8px;
+            margin-bottom: 12px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 13px;
+            position: relative;
+        }
+        
+        label.required::after {
+            content: '*';
+            color: #dc3545;
+            margin-left: 4px;
+        }
+        
+        input[type="text"],
+        input[type="date"],
+        input[type="tel"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: var(--transition);
+            background-color: #fff;
+        }
+        
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        .question {
+            margin-bottom: 18px;
+            padding: 12px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+            transition: var(--transition);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .question:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: var(--transition);
+            flex: 1 0 calc(50% - 10px);
+            min-width: 120px;
+        }
+        
+        .option:hover {
+            background-color: rgba(0, 102, 204, 0.1);
+        }
+        
+        .option input {
+            margin-right: 6px;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        
+        .trainer-section {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+        
+        .trainer-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .trainer-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .trainer-title i {
+            margin-right: 8px;
+            color: var(--secondary-color);
+        }
+        
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin: 25px 0 15px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1 0 150px;
+            max-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-submit {
+            background: var(--gradient-secondary);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+        }
+        
+        .btn-reset {
+            background-color: #e2e8f0;
+            color: #4a5568;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-submit:hover {
+            background: var(--gradient-primary);
+        }
+        
+        .btn-reset:hover {
+            background-color: #d1d8e0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 18px;
+            background-color: var(--primary-color);
+            color: #cbd5e0;
+            font-size: 12px;
+            clip-path: polygon(0 20%, 100% 0, 100% 100%, 0% 100%);
+            padding-top: 25px;
+        }
+        
+        /* Employee details card styles */
+        .detail-card {
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+            margin-bottom: 12px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .detail-value {
+            color: #495057;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        
+        .loading-spinner {
+            display: none;
+        }
+        
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+        
+        .invalid-feedback {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 6px;
+            display: block;
+        }
+        
+.input-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.input-group input {
+    width: 100%;
+    border-radius: 8px !important;
+    margin-bottom: 8px;
+}
+
+.input-group button {
+    border-radius: 8px;
+    white-space: nowrap;
+    padding: 12px 15px;
+    background: var(--gradient-secondary);
+    color: white;
+    border: none;
+    font-weight: 600;
+    transition: var(--transition);
+    width: 100%; /* Make button full width on mobile */
+}
+
+.input-group button:hover {
+    background: var(--gradient-primary);
+}
+
+        
+        /* Floating labels effect */
+        .floating-label-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .floating-label {
+            position: absolute;
+            pointer-events: none;
+            left: 12px;
+            top: 12px;
+            transition: var(--transition);
+            background: white;
+            padding: 0 5px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        input:focus ~ .floating-label,
+        input:not(:placeholder-shown) ~ .floating-label,
+        textarea:focus ~ .floating-label,
+        textarea:not(:placeholder-shown) ~ .floating-label {
+            top: -10px;
+            left: 10px;
+            font-size: 11px;
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        /* Custom radio buttons */
+        .custom-radio {
+            position: relative;
+            padding-left: 25px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 13px;
+        }
+        
+        .custom-radio input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .radio-checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 18px;
+            width: 18px;
+            background-color: #fff;
+            border: 2px solid #cbd5e0;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        
+        .custom-radio:hover input ~ .radio-checkmark {
+            border-color: var(--secondary-color);
+        }
+        
+        .custom-radio input:checked ~ .radio-checkmark {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .radio-checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+        
+        .custom-radio input:checked ~ .radio-checkmark:after {
+            display: block;
+        }
+        
+        .custom-radio .radio-checkmark:after {
+            top: 3px;
+            left: 3px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+        }
+        
+        /* Info box */
+        .info-box {
+            font-size: 14px;
+            color: var(--primary-color);
+            background-color: #f0f7ff;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .info-box i {
+            margin-right: 10px;
+            color: var(--accent-color);
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        
+        /* Trainer name input */
+        .trainer-name-input {
+            width: 100%;
+            max-width: 250px;
+            display: block;
+            margin-left: 5px;
+            padding: 8px 10px;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        .section:nth-child(2) { animation-delay: 0.1s; }
+        .section:nth-child(3) { animation-delay: 0.2s; }
+        .section:nth-child(4) { animation-delay: 0.3s; }
+        .section:nth-child(5) { animation-delay: 0.4s; }
+        .section:nth-child(6) { animation-delay: 0.5s; }
+        .section:nth-child(7) { animation-delay: 0.6s; }
+        .section:nth-child(8) { animation-delay: 0.7s; }
+        
+        /* Tablet and larger screens */
+        @media (min-width: 576px) {
+.input-group {
+        flex-direction: row;
+    }
+    
+    .input-group input {
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        margin-bottom: 0;
+        flex: 1; /* Allow input to grow */
+        min-width: 0; /* Fix flexbox issue */
+    }
+    
+    .input-group button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        width: auto; /* Auto width on larger screens */
+        flex-shrink: 0; /* Prevent button from shrinking */
+    }
+}
+            .option {
+                flex: 0 0 auto;
+            }
+        }
+
+        
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 25px 20px 40px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .header h2 {
+                font-size: 18px;
+            }
+            
+            .form-container {
+                padding: 25px;
+            }
+            
+            .section-title {
+                font-size: 20px;
+            }
+            
+            .form-group {
+                flex: 1 0 calc(50% - 16px);
+            }
+            
+            label, .question-text {
+                font-size: 14px;
+            }
+            
+            input[type="text"],
+            input[type="date"],
+            input[type="tel"],
+            textarea {
+                font-size: 15px;
+            }
+            
+            .option {
+                font-size: 14px;
+            }
+            
+            .btn {
+                flex: 0 0 auto;
+            }
+        }
+        
+        /* Desktop screens */
+        @media (min-width: 992px) {
+            .form-group {
+                flex: 1 0 calc(33.333% - 16px);
+            }
+            
+            .header h1 {
+                font-size: 26px;
+            }
+            
+            .header h2 {
+                font-size: 20px;
+            }
+            
+            .header-logo {
+                width: 90px;
+                height: 90px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="header-logo">
+                    <img src="https://www.tatamotors.com/wp-content/uploads/2020/05/tata-motors-logo.png" alt="Tata Motors Logo">
+                </div>
+                <h1>कार्यक्रमा बाबत प्रशिक्षणार्थ्यांचा अभिप्राय</h1>
+                <h2>(CIRO | Feedback)</h2>
+                <h2>स्किल डेव्हलपमेंट सेंटर टी. एम. सी. वी. पुणे</h2>
+            </div>
+        </div>
+        
+        <div class="form-container">
+            <form action="{{ url_for('feedback.submit_feedback') }}" method="POST" id="feedbackForm">
+                <input type="hidden" name="program_id" value="{{ program_id }}">
+                <input type="hidden" name="participants_name" id="participants_name_hidden" value="">
+                <input type="hidden" name="program_id" value="{{ program_id }}">
+
+                <!-- Participant Details -->
+                <div class="section">
+                    <h3 class="section-title">प्रशिक्षणार्थ्याची माहिती</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="program_title" class="required">कार्यक्रमाचे शीर्षक :</label>
+                            <input type="text" id="program_title" name="program_title" 
+                                   value="{{ program_title }}" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="program_date" class="required">कार्यक्रमाचे दिनांक :</label>
+                            <input type="date" id="program_date" name="program_date" 
+                                   value="{{ program_date }}" required readonly>
+                        </div>
+                    </div>
+        
+                   <!-- Employee Verification - Fixed Section -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="per_no" class="required">Employee PER Number:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="per_no" name="per_no" 
+                                   placeholder="Enter PER number" required>
+                            <button class="btn btn-primary" type="button" id="verifyPerNoBtn">
+                                <i class="fas fa-search"></i>
+                                <span id="verifyText">Verify</span>
+                                <span id="verifySpinner" class="spinner-border spinner-border-sm loading-spinner" role="status"></span>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback" id="perNoError"></div>
+                    </div>
+                </div>
+        
+                    <!-- Employee Details (Dynamic) -->
+                    <div id="employeeSection" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="detail-card">
+                                    <div class="detail-label">Full Name</div>
+                                    <div class="detail-value" id="participants_name"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="detail-card">
+                                    <div class="detail-label">BC Number</div>
+                                    <div class="detail-value" id="bc_no"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="detail-card">
+                                    <div class="detail-label">Gender</div>
+                                    <div class="detail-value" id="gender"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="detail-card">
+                                    <div class="detail-label">Employee Group</div>
+                                    <div class="detail-value" id="employee_group"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="detail-card">
+                                    <div class="detail-label">Department</div>
+                                    <div class="detail-value" id="department"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="detail-card">
+                                    <div class="detail-label">Factory</div>
+                                    <div class="detail-value" id="factory"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone" class="required">फोन :</label>
+                            <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="SeniorName" class="required">वरिष्ठांचे नाव :</label>
+                            <input type="text" id="SeniorName" name="senior_name" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="info-box">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>सूचना :</strong> खाली नमूद केलेल्या विधानांपुढील एक पर्याय निवडा.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 1: Participant Preparation -->
+                <div class="section">
+                    <h3 class="section-title">१. प्रशिक्षणार्थ्याची पूर्वतयारी</h3>
+                    
+                    <div class="question">
+                        <div class="question-text">१. मला या विषयाची जुजबी माहिती कार्यक्रमाला येण्याअगोदर होती.</div>
+                        <div class="options">
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec1_q1" value="1" required>
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec1_q1" value="2">
+                                <span class="radio-checkmark"></span>
+                                असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec1_q1" value="3">
+                                <span class="radio-checkmark"></span>
+                                सहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec1_q1" value="4">
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे सहमत
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="question">
+                        <div class="question-text">२. मला या कार्यक्रमाचे उद्दिष्ट समजले आहे.</div>
+                        <div class="options">
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec1_q2" value="1" required>
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec1_q2" value="2">
+                                <span class="radio-checkmark"></span>
+                                असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec1_q2" value="3">
+                                <span class="radio-checkmark"></span>
+                                सहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec1_q2" value="4">
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे सहमत
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 2: Program Content -->
+                <div class="section">
+                    <h3 class="section-title">२. कार्यक्रमात समाविष्ट करण्यात आलेली माहिती.</h3>
+                    
+                    <div class="question">
+                        <div class="question-text">१. माझ्या कामाशी संबंधित होती</div>
+                        <div class="options">
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q1" value="1" required>
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q1" value="2">
+                                <span class="radio-checkmark"></span>
+                                असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q1" value="3">
+                                <span class="radio-checkmark"></span>
+                                सहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q1" value="4">
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे सहमत
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="question">
+                        <div class="question-text">२. मूळ विषय समजण्याच्या दृष्टीने पुरेशी आहे.</div>
+                        <div class="options">
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q2" value="1" required>
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q2" value="2">
+                                <span class="radio-checkmark"></span>
+                                असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q2" value="3">
+                                <span class="radio-checkmark"></span>
+                                सहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q2" value="4">
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे सहमत
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="question">
+                        <div class="question-text">३. माझ्या कामात सुधारणा करण्यास उपयुक्त आहे.</div>
+                        <div class="options">
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q3" value="1" required>
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q3" value="2">
+                                <span class="radio-checkmark"></span>
+                                असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q3" value="3">
+                                <span class="radio-checkmark"></span>
+                                सहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec2_q3" value="4">
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे सहमत
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 3: Application in Work -->
+                <div class="section">
+                    <h3 class="section-title">३. कामामध्ये वापर</h3>
+                    
+                    <div class="question">
+                        <div class="question-text">मी मिळालेल्या ज्ञानाचा कामात उपयोग करू शकेन</div>
+                        <div class="options">
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec3_q1" value="1" required>
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec3_q1" value="2">
+                                <span class="radio-checkmark"></span>
+                                असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec3_q1" value="3">
+                                <span class="radio-checkmark"></span>
+                                सहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec3_q1" value="4">
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे सहमत
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4 - Trainers -->
+                <div class="section">
+                    <h3 class="section-title">४. व्याख्यात्याबद्दल अभिप्राय</h3>
+                    {% for trainer in trainers %}
+                    <div class="trainer-section">
+                        <div class="trainer-title">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            व्याख्याता क्र. {{ trainer.num }} : नाव : 
+                        </div>
+                        <input type="text" name="trainer{{ trainer.num }}_name" 
+                               value="{{ trainer.name }}" 
+                               placeholder="व्याख्यात्याचे नाव" 
+                               class="trainer-name-input" readonly>
+                        
+                        <div class="question">
+                            <div class="question-text">अ) व्याख्यात्याला विषयाचे सखोल ज्ञान आहे.</div>
+                            <div class="options">
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q1" value="1" required>
+                                    <span class="radio-checkmark"></span>
+                                    पूर्णपणे असहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q1" value="2">
+                                    <span class="radio-checkmark"></span>
+                                    असहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q1" value="3">
+                                    <span class="radio-checkmark"></span>
+                                    सहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q1" value="4">
+                                    <span class="radio-checkmark"></span>
+                                    पूर्णपणे सहमत
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="question">
+                            <div class="question-text">ब) व्याख्यात्याकडे समजावून सांगण्याचे कौशल्य आहे.</div>
+                            <div class="options">
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q2" value="1" required>
+                                    <span class="radio-checkmark"></span>
+                                    पूर्णपणे असहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q2" value="2">
+                                    <span class="radio-checkmark"></span>
+                                    असहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q2" value="3">
+                                    <span class="radio-checkmark"></span>
+                                    सहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q2" value="4">
+                                    <span class="radio-checkmark"></span>
+                                    पूर्णपणे सहमत
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="question">
+                            <div class="question-text">क) व्याख्याता शंका समाधान उत्तमरित्या करू शकतो.</div>
+                            <div class="options">
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q3" value="1" required>
+                                    <span class="radio-checkmark"></span>
+                                    पूर्णपणे असहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q3" value="2">
+                                    <span class="radio-checkmark"></span>
+                                    असहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q3" value="3">
+                                    <span class="radio-checkmark"></span>
+                                    सहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q3" value="4">
+                                    <span class="radio-checkmark"></span>
+                                    पूर्णपणे सहमत
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="question">
+                            <div class="question-text">ड) आपले व्याख्यात्या बद्दल सर्वसाधारण मत (पेहराव, सहभाग, सादरीकरण इ.) चांगले आहे.</div>
+                            <div class="options">
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q4" value="1" required>
+                                    <span class="radio-checkmark"></span>
+                                    पूर्णपणे असहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q4" value="2">
+                                    <span class="radio-checkmark"></span>
+                                    असहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q4" value="3">
+                                    <span class="radio-checkmark"></span>
+                                    सहमत
+                                </label>
+                                <label class="option custom-radio">
+                                    <input type="radio" name="trainer{{ trainer.num }}_q4" value="4">
+                                    <span class="radio-checkmark"></span>
+                                    पूर्णपणे सहमत
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Section 5 -->
+                <div class="section">
+                    <h3 class="section-title">५. कार्यक्रमाचे संयोजन व इतर व्यवस्था</h3>
+                    
+                    <div class="question">
+                        <div class="question-text">१. कार्यक्रमाचे संयोजन व इतर व्यवस्था समाधानकारक होती.</div>
+                        <div class="options">
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec5_q1" value="1" required>
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec5_q1" value="2">
+                                <span class="radio-checkmark"></span>
+                                असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec5_q1" value="3">
+                                <span class="radio-checkmark"></span>
+                                सहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec5_q1" value="4">
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे सहमत
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="question">
+                        <div class="question-text">२. इतर पूरक व्यवस्था (चहा, नाष्टा इ.) समाधानकारक होती.</div>
+                        <div class="options">
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec5_q2" value="1" required>
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec5_q2" value="2">
+                                <span class="radio-checkmark"></span>
+                                असहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec5_q2" value="3">
+                                <span class="radio-checkmark"></span>
+                                सहमत
+                            </label>
+                            <label class="option custom-radio">
+                                <input type="radio" name="sec5_q2" value="4">
+                                <span class="radio-checkmark"></span>
+                                पूर्णपणे सहमत
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 6 -->
+                <div class="section">
+                    <h3 class="section-title">६. कार्यक्रमा बाबत</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="question">
+                                <div class="question-text">अ) कार्यक्रमाची गती :</div>
+                                <div class="options">
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec6_q1" value="1" required>
+                                        <span class="radio-checkmark"></span>
+                                        धीमी (हळू)
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec6_q1" value="2">
+                                        <span class="radio-checkmark"></span>
+                                        योग्य
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec6_q1" value="3">
+                                        <span class="radio-checkmark"></span>
+                                        वेगवान
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="question">
+                                <div class="question-text">ब) कार्यक्रमाचा कालावधी :</div>
+                                <div class="options">
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec6_q2" value="1" required>
+                                        <span class="radio-checkmark"></span>
+                                        कमी
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec6_q2" value="2">
+                                        <span class="radio-checkmark"></span>
+                                        योग्य
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec6_q2" value="3">
+                                        <span class="radio-checkmark"></span>
+                                        जास्त
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 7 -->
+                <div class="section">
+                    <h3 class="section-title">७. कार्यक्रमाचे सर्वसाधारण मूल्यमापन</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="question">
+                                <div class="question-text">अ) उपयोगाच्या दृष्टीकोनातून या कार्यक्रमाचे मूल्यमापन करा :</div>
+                                <div class="options">
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec7_q1" value="1" required>
+                                        <span class="radio-checkmark"></span>
+                                        अतिशय नि:कृष्ट
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec7_q1" value="2">
+                                        <span class="radio-checkmark"></span>
+                                        नि:कृष्ट
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec7_q1" value="3">
+                                        <span class="radio-checkmark"></span>
+                                        उत्कृष्ट
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec7_q1" value="4">
+                                        <span class="radio-checkmark"></span>
+                                        अतिशय उत्कृष्ट
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="question">
+                                <div class="question-text">ब) तुमच्या इतर सहकाऱ्यांनी सुध्दा या कार्यक्रमात यावे असे वाटते का?</div>
+                                <div class="options">
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec7_q2" value="1" required>
+                                        <span class="radio-checkmark"></span>
+                                        होय
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec7_q2" value="2">
+                                        <span class="radio-checkmark"></span>
+                                        सांगता येत नाही
+                                    </label>
+                                    <label class="option custom-radio">
+                                        <input type="radio" name="sec7_q2" value="3">
+                                        <span class="radio-checkmark"></span>
+                                        नाही
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="question">
+                            <div class="question-text">क) यातील कोणता विषय तुम्हाला सर्वात जास्त संबंधीत वाटला?</div>
+                            <textarea name="sec7_q3_text" placeholder="तुमचे उत्तर येथे लिहा..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="question">
+                            <div class="question-text">ड) या कार्यक्रमामध्ये एखाद्या विषयाचा समावेश झाला नाही असे आपणांस वाटते का? असल्यास तो विषय कोणता?</div>
+                            <textarea name="sec7_q4_text" placeholder="तुमचे उत्तर येथे लिहा..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Comments -->
+                <div class="section">
+                    <div class="form-group">
+                        <label for="suggestions">आपल्या या कार्यक्रमाच्या सुधारणेबाबत काही सूचना असल्यास खाली लिहा :</label>
+                        <textarea id="suggestions" name="suggestions" placeholder="तुमचे सुचना येथे लिहा..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Submit Buttons -->
+                <div class="btn-container">
+                    <button type="submit" class="btn btn-submit">
+                        <i class="fas fa-paper-plane"></i> सबमिट करा
+                    </button>
+                    <button type="reset" class="btn btn-reset">
+                        <i class="fas fa-undo"></i> रिसेट करा
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="footer">
+            टाटा मोटर्स, पुणे © 2025 | सर्व हक्क राखीव
+        </div>
+    </div>
+
+    <script>
+    $(document).ready(function() {
+        // Employee verification functionality
+        $('#verifyPerNoBtn').click(function() {
+            const perNo = $('#per_no').val().trim();
+            const verifyBtn = $(this);
+            const verifyText = $('#verifyText');
+            const verifySpinner = $('#verifySpinner');
+            const errorField = $('#perNoError');
+            
+            if (!perNo) {
+                errorField.text('Please enter a PER number');
+                $('#per_no').addClass('is-invalid');
+                return;
+            }
+            
+            // Show loading state
+            verifyBtn.prop('disabled', true);
+            verifyText.text('Verifying...');
+            verifySpinner.show();
+            errorField.text('');
+            $('#per_no').removeClass('is-invalid');
+            
+            $.ajax({
+                url: '/feedback/verify_employee',
+                type: 'POST',
+                data: { per_no: perNo },
+                success: function(data) {
+                    console.log('Response:', data);
+
+                    if (data.success) {
+                        // Populate employee details
+                        $('#participants_name').text(data.employee.participants_name || 'N/A');
+                        $('#bc_no').text(data.employee.bc_no || 'N/A');
+                        $('#gender').text(data.employee.gender || 'N/A');
+                        $('#employee_group').text(data.employee.employee_group || 'N/A');
+                        $('#department').text(data.employee.department || 'N/A');
+                        $('#factory').text(data.employee.factory || 'N/A');
+                        
+                        // Set hidden field value
+                        $('#participants_name_hidden').val(data.employee.participants_name || '');
+                        
+                        // Show employee section
+                        $('#employeeSection').slideDown();
+                        
+                        // Clear SeniorName field (fixing the issue)
+                        $('#SeniorName').val('');
+                    } else {
+                        errorField.text(data.error || 'Error verifying employee');
+                        $('#per_no').addClass('is-invalid');
+                        $('#employeeSection').hide();
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr);
+                    errorField.text('Error verifying employee');
+                    $('#per_no').addClass('is-invalid');
+                    $('#employeeSection').hide();
+                },
+                complete: function() {
+                    // Reset button state
+                    verifyBtn.prop('disabled', false);
+                    verifyText.text('Verify');
+                    verifySpinner.hide();
+                }
+            });
+        });
+
+        // Form validation
+        $('#feedbackForm').submit(function(e) {
+            e.preventDefault();
+            let isValid = true;
+            
+            // Get program_id from the hidden input
+            const program_id = $('input[name="program_id"]').val();
+            
+            if (!program_id) {
+                alert('Program ID is missing');
+                return false;
+            }
+            
+            // Validate PER number verification
+            if ($('#employeeSection').is(':hidden')) {
+                $('#perNoError').text('Please verify your PER number first');
+                $('#per_no').addClass('is-invalid');
+                isValid = false;
+            }
+
+            // Validate required fields
+            $('input[required], textarea[required]').each(function() {
+                if (!$(this).val()) {
+                    isValid = false;
+                    $(this).addClass('is-invalid');
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+            
+            // Validate radio buttons
+            $('input[type="radio"][required]').each(function() {
+                const name = $(this).attr('name');
+                if (!$(`input[name="${name}"]:checked`).length) {
+                    isValid = false;
+                    const question = $(this).closest('.question');
+                    if (question.length) {
+                        question.css('backgroundColor', '#fff0f0');
+                    }
+                }
+            });
+
+            if (isValid) {
+                // Sweet alert or confirmation before submit
+                if (confirm('तुम्हाला नक्की हा अभिप्राय सबमिट करायचा आहे का?')) {
+                    alert('धन्यवाद! तुमचा अभिप्राय यशस्वीरित्या सबमिट केला गेला आहे.');
+                    this.submit();
+                }
+            } else {
+                alert('कृपया सर्व आवश्यक फील्ड भरा.');
+                $('html, body').animate({
+                    scrollTop: $(".is-invalid").first().offset().top - 100
+                }, 500);
+            }
+        });
+        
+        // Reset form button
+        $('.btn-reset').click(function() {
+            if (confirm('तुम्हाला नक्की फॉर्म रिसेट करायचे आहे का?')) {
+                $('#feedbackForm')[0].reset();
+                $('.question').css('backgroundColor', '#f8fafc');
+                // Also hide employee section on reset
+                $('#employeeSection').hide();
+            }
+        });
+        
+        // Add animation to radio buttons when selected
+        $('input[type="radio"]').change(function() {
+            const checkmark = $(this).siblings('.radio-checkmark');
+            checkmark.css('transform', 'scale(0.8)');
+            setTimeout(() => {
+                checkmark.css('transform', 'scale(1)');
+            }, 200);
+            
+            // Remove error highlight from question
+            $(this).closest('.question').css('backgroundColor', '#f8fafc');
+        });
+        
+        // Add focus effects
+        $('input, textarea').focus(function() {
+            $(this).parent().find('.floating-label').addClass('active');
+        }).blur(function() {
+            if (!$(this).val()) {
+                $(this).parent().find('.floating-label').removeClass('active');
+            }
+        });
+    });
+    </script>
+</body>
+</html>

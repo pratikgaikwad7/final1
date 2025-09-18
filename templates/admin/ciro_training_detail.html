@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tata Motors - Training Feedback System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #003366;">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="{{ url_for('static', filename='image.png') }}" alt="Tata Motors Logo" height="40">
+                Tata Motors - Training Feedback System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ciro.dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ciro.form') }}">Feedback Form</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card shadow mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #003366; color: white;">
+                <h4 class="mb-0">{{ session.program_title }} - {{ session.program_date.strftime('%d %b, %Y') }}</h4>
+                <div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            डेटा एक्सपोर्ट करा
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('ciro.export_detail', program_title=program_title, program_date=program_date) }}">सर्व प्रतिसाद एक्सपोर्ट करा</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('ciro.export_summary_report', program_title=program_title, program_date=program_date) }}">सारांश रिपोर्ट एक्सपोर्ट करा</a></li>
+                        </ul>
+                    </div>
+                    <a href="{{ url_for('ciro.dashboard') }}" class="btn btn-light ms-2">डॅशबोर्डवर परत जा</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Summary Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">प्रतिसाद</h5>
+                                <p class="card-text display-6">{{ session.response_count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">CSI (ग्राहक समाधान निर्देशांक)</h5>
+                                <p class="card-text display-6 {% if session.csi >= 3.5 %}text-success{% elif session.csi >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ "%.2f"|format(session.csi) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">TFI (व्याख्याता अभिप्राय निर्देशांक)</h5>
+                                <p class="card-text display-6 {% if session.tfi >= 3.5 %}text-success{% elif session.tfi >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ "%.2f"|format(session.tfi) if session.tfi else '-' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">सरासरी गुण</h5>
+                                <p class="card-text display-6 {% if session.avg_score >= 3.5 %}text-success{% elif session.avg_score >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ "%.2f"|format(session.avg_score) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trainer Feedback -->
+                <div class="card mb-4">
+                    <div class="card-header" style="background-color: #f8f9fa;">
+                        <h5 class="mb-0">व्याख्याता अभिप्राय</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if trainers %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>व्याख्याते</th>
+                                        <th>विषयाचे सखोल ज्ञान</th>
+                                        <th>समजावून सांगण्याचे कौशल्य</th>
+                                        <th>शंका समाधान</th>
+                                        <th>सर्वसाधारण मत</th>
+                                        <th>प्रतिसाद</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for trainer in trainers %}
+                                    <tr>
+                                        <td>{{ trainer.name }}</td>
+                                        <td>{{ "%.2f"|format(trainer.q1_avg) }}</td>
+                                        <td>{{ "%.2f"|format(trainer.q2_avg) }}</td>
+                                        <td>{{ "%.2f"|format(trainer.q3_avg) }}</td>
+                                        <td>{{ "%.2f"|format(trainer.q4_avg) }}</td>
+                                        <td>{{ trainer.response_count }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">या सत्रासाठी व्याख्यात्यांचा अभिप्राय उपलब्ध नाही.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Individual Responses -->
+                <div class="card mb-4">
+                    <div class="card-header" style="background-color: #f8f9fa;">
+                        <h5 class="mb-0">वैयक्तिक प्रतिसाद ({{ individual_responses|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="accordion" id="responsesAccordion">
+                            {% for response in individual_responses %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" 
+                                            aria-controls="collapse{{ loop.index }}">
+                                        {{ response.employee_name }} ({{ response.personal_number }}) - 
+                                        <span class="ms-2 {% set csi = (response.sec1_q1 + response.sec1_q2 + response.sec2_q1 + response.sec2_q2 + response.sec2_q3 + response.sec3_q1 + response.sec5_q1 + response.sec5_q2 + response.sec6_q1 + response.sec6_q2 + response.sec7_q1 + response.sec7_q2)/12.0 %}
+                                        {% if csi >= 3.5 %}text-success{% elif csi >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                                            CSI: {{ "%.2f"|format(csi) }}
+                                        </span>
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" 
+                                     aria-labelledby="heading{{ loop.index }}" data-bs-parent="#responsesAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>प्रशिक्षणार्थी माहिती</h6>
+                                                <table class="table table-sm">
+                                                    <tr><th>नाव:</th><td>{{ response.employee_name }}</td></tr>
+                                                    <tr><th>पर्सनल नं.:</th><td>{{ response.personal_number }}</td></tr>
+                                                    <tr><th>ग्रेड:</th><td>{{ response.grade }}</td></tr>
+                                                    <tr><th>बी.सी. नं.:</th><td>{{ response.bc_number }}</td></tr>
+                                                    <tr><th>डिव्हि./ब्लॉक:</th><td>{{ response.div_block }}</td></tr>
+                                                    <tr><th>सबमिट वेळ:</th><td>{{ response.created_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>विभागनिहाय गुण</h6>
+                                                <table class="table table-sm">
+                                                    <tr><th>१. प्रशिक्षणार्थ्याची पूर्वतयारी:</th><td>{{ response.sec1_q1 }}, {{ response.sec1_q2 }}</td></tr>
+                                                    <tr><th>२. कार्यक्रमातील माहिती:</th><td>{{ response.sec2_q1 }}, {{ response.sec2_q2 }}, {{ response.sec2_q3 }}</td></tr>
+                                                    <tr><th>३. कामामध्ये वापर:</th><td>{{ response.sec3_q1 }}</td></tr>
+                                                    <tr><th>५. कार्यक्रमाचे संयोजन व इतर व्यवस्था:</th><td>{{ response.sec5_q1 }}, {{ response.sec5_q2 }}</td></tr>
+                                                    <tr><th>६. कार्यक्रमा बाबत:</th><td>{{ response.sec6_q1 }}, {{ response.sec6_q2 }}</td></tr>
+                                                    <tr><th>७. सर्वसाधारण प्रतिपादन:</th><td>{{ response.sec7_q1 }}, {{ response.sec7_q2 }}</td></tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Trainer Feedback -->
+                                        {% if response.trainer1_name or response.trainer2_name or response.trainer3_name or response.trainer4_name %}
+                                        <div class="mt-3">
+                                            <h6>व्याख्याता अभिप्राय</h6>
+                                            <div class="row">
+                                                {% if response.trainer1_name %}
+                                                <div class="col-md-3">
+                                                    <div class="card">
+                                                        <div class="card-header bg-light">
+                                                            <strong>{{ response.trainer1_name }}</strong>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <p>विषय ज्ञान: {{ response.trainer1_q1 or '-' }}</p>
+                                                            <p>समजावून सांगणे: {{ response.trainer1_q2 or '-' }}</p>
+                                                            <p>शंका समाधान: {{ response.trainer1_q3 or '-' }}</p>
+                                                            <p>सर्वसाधारण मत: {{ response.trainer1_q4 or '-' }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if response.trainer2_name %}
+                                                <div class="col-md-3">
+                                                    <div class="card">
+                                                        <div class="card-header bg-light">
+                                                            <strong>{{ response.trainer2_name }}</strong>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <p>विषय ज्ञान: {{ response.trainer2_q1 or '-' }}</p>
+                                                            <p>समजावून सांगणे: {{ response.trainer2_q2 or '-' }}</p>
+                                                            <p>शंका समाधान: {{ response.trainer2_q3 or '-' }}</p>
+                                                            <p>सर्वसाधारण मत: {{ response.trainer2_q4 or '-' }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if response.trainer3_name %}
+                                                <div class="col-md-3">
+                                                    <div class="card">
+                                                        <div class="card-header bg-light">
+                                                            <strong>{{ response.trainer3_name }}</strong>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <p>विषय ज्ञान: {{ response.trainer3_q1 or '-' }}</p>
+                                                            <p>समजावून सांगणे: {{ response.trainer3_q2 or '-' }}</p>
+                                                            <p>शंका समाधान: {{ response.trainer3_q3 or '-' }}</p>
+                                                            <p>सर्वसाधारण मत: {{ response.trainer3_q4 or '-' }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if response.trainer4_name %}
+                                                <div class="col-md-3">
+                                                    <div class="card">
+                                                        <div class="card-header bg-light">
+                                                            <strong>{{ response.trainer4_name }}</strong>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <p>विषय ज्ञान: {{ response.trainer4_q1 or '-' }}</p>
+                                                            <p>समजावून सांगणे: {{ response.trainer4_q2 or '-' }}</p>
+                                                            <p>शंका समाधान: {{ response.trainer4_q3 or '-' }}</p>
+                                                            <p>सर्वसाधारण मत: {{ response.trainer4_q4 or '-' }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Text Feedback -->
+                                        <div class="mt-3">
+                                            <h6>मजकूर आधारित अभिप्राय</h6>
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <p><strong>सर्वात संबंधीत विषय:</strong></p>
+                                                    <p>{{ response.sec7_q3_text or 'उपलब्ध नाही' }}</p>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <p><strong>गहाळ विषय:</strong></p>
+                                                    <p>{{ response.sec7_q4_text or 'उपलब्ध नाही' }}</p>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <p><strong>सूचना:</strong></p>
+                                                    <p>{{ response.suggestions or 'उपलब्ध नाही' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-5 py-3 text-center" style="background-color: #003366; color: white;">
+        <div class="container">
+            <p class="mb-0">Tata Motors, Pune © {{ now.year if now else '2025' }} | All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
