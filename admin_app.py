@@ -21,7 +21,9 @@ from user_auth import user_auth
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Change this to a secure secret key
-app.register_blueprint(attendance_bp)
+
+# Register blueprints
+app.register_blueprint(attendance_bp, url_prefix='/attendance')
 app.register_blueprint(target_bp)
 app.register_blueprint(tni_shared_bp)
 app.register_blueprint(factory_bp)
@@ -38,10 +40,11 @@ app.config.update({
     'DB_USER': Config.DB_USER,
     'DB_PASSWORD': Config.DB_PASSWORD,
     'DB_NAME': Config.DB_NAME,
-    'PROGRAM_DATA_FILE': Config.PROGRAM_DATA_FILE,  # Updated to single file
+    'PROGRAM_DATA_FILE': Config.PROGRAM_DATA_FILE,
     'QR_FOLDER': Config.QR_FOLDER,
     'EOR_FILENAME': Config.EOR_FILENAME
 })
+
 # Initialize QR Handler
 qr_handler = QRHandler(app)
 attendance_bp.qr_handler = qr_handler
@@ -63,20 +66,31 @@ def get_current_user():
         }
     return None
 
-# Before request handler to check authentication
+# Login check before each request
 @app.before_request
 def require_login():
-    # List of endpoints that don't require authentication
+    """
+    Allow access if:
+    - Endpoint is in allowed_routes
+    - Endpoint belongs to attendance blueprint
+    Otherwise, redirect to login.
+    """
     allowed_routes = ['user_auth.login', 'user_auth.logout', 'static', 'home']
-    
-    # Check if the request endpoint is in the allowed routes
+
+    # Allow all attendance blueprint routes
+    if request.endpoint and request.endpoint.startswith('attendance.'):
+        return
+
+    # Allow explicitly allowed routes
     if request.endpoint and request.endpoint in allowed_routes:
         return
-    
+
     # Redirect to login if not logged in
     if not is_logged_in():
         flash('You must be logged in to access this page', 'error')
         return redirect(url_for('user_auth.login'))
+
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'xlsx'}
