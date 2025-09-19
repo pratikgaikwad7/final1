@@ -412,7 +412,7 @@ def qr_attendance(qr_code):
                             program=program,
                             status=program.get('attendance_status'),
                             message=message)
-    return render_template('admin/attendance_form.html', 
+    return render_template('admin/submit_attendance.html', 
                          program=program,
                          current_day=program['current_day'])
 
@@ -429,7 +429,7 @@ def program_attendance(program_id):
                             program=program,
                             status=program.get('attendance_status'),
                             message=message)
-    return render_template('admin/attendance_form.html', 
+    return render_template('admin/submit_attendance.html', 
                          program=program,
                          current_day=program['current_day'])
 
