@@ -1,0 +1,22 @@
+CREATE TABLE induction (
+    sr_no INT AUTO_INCREMENT PRIMARY KEY,
+    ticket_no VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    gender VARCHAR(10),
+    employee_category VARCHAR(50),
+    plant_location VARCHAR(100),
+    joined_year INT,
+    date_from DATE,
+    date_to DATE,
+    shift VARCHAR(50),
+    learning_hours DECIMAL(5,2),
+    training_name VARCHAR(200),
+    batch_number VARCHAR(50),
+    training_venue_name VARCHAR(200),
+    faculty_name VARCHAR(100),
+    subject_name VARCHAR(100),
+    remark TEXT,
+    
+    -- Add unique constraint on ticket_no to prevent duplicates and enable upsert logic
+    CONSTRAINT uc_ticket_no UNIQUE (ticket_no)
+);
