@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Training Files</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        /* CSS Reset & Normalization */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        :root {
+            --primary: #2c5aa0;
+            --primary-light: #e8effb;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --info: #17a2b8;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --box-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --transition: all 0.2s ease;
+        }
+        
+        html {
+            font-size: 14px;
+        }
+        
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 1.5rem 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            color: var(--gray-700);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .container-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 1.75rem;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card-upload {
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            height: 100%;
+            border: 1px solid var(--gray-300);
+            background: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-upload:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow-hover);
+        }
+        
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 0.875rem 1rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .upload-icon {
+            font-size: 2.25rem;
+            color: var(--primary-light);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: block;
+            padding: 0.875rem 1rem;
+            background: var(--gray-100);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            text-align: center;
+            transition: var(--transition);
+            margin-bottom: 1rem;
+            border: 1px dashed var(--gray-400);
+        }
+        
+        .file-label:hover {
+            background: var(--gray-200);
+            border-color: var(--primary);
+        }
+        
+        .upload-btn {
+            background: var(--success);
+            border: none;
+            padding: 0.875rem 1rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            width: 100%;
+            margin-top: auto;
+            transition: var(--transition);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .upload-btn:hover {
+            background: #218838;
+        }
+        
+        .instructions {
+            background-color: var(--primary-light);
+            padding: 1.25rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.75rem;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .instructions h5 {
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .instructions ul {
+            margin-bottom: 0;
+            padding-left: 1.25rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.375rem;
+        }
+        
+        .alert-container {
+            max-width: 1200px;
+            margin: 0 auto 1.25rem;
+        }
+        
+        .back-btn {
+            background: var(--gray-600);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            margin: 1.5rem auto;
+            display: block;
+            max-width: 180px;
+            transition: var(--transition);
+            color: white;
+            text-align: center;
+        }
+        
+        .back-btn:hover {
+            background: var(--gray-700);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .card-highlight {
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+        
+        .required-fields {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        .card-subtitle {
+            color: var(--gray-600);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        /* Success Message Box */
+        .success-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+        
+        .success-box {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.75rem;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .success-icon {
+            font-size: 3rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+        }
+        
+        .success-title {
+            font-size: 1.25rem;
+            color: var(--success);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .success-content {
+            margin-bottom: 1.5rem;
+            color: var(--gray-700);
+            line-height: 1.6;
+        }
+        
+        .success-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        
+        .success-btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+        
+        .btn-home {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-home:hover {
+            background: #1a4687;
+        }
+        
+        .btn-stay {
+            background-color: var(--gray-200);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        
+        .btn-stay:hover {
+            background-color: var(--gray-300);
+        }
+        
+        /* Alert customization */
+        .alert {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--box-shadow);
+            padding: 0.875rem 1rem;
+        }
+        
+        .alert-dismissible .close {
+            padding: 0.875rem 1rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .card-body {
+                padding: 1.25rem;
+            }
+            
+            .success-box {
+                padding: 1.5rem;
+            }
+            
+            .success-actions {
+                flex-direction: column;
+            }
+            
+            .instructions {
+                padding: 1rem;
+            }
+        }
+        
+        /* Focus states for accessibility */
+        button:focus,
+        input:focus,
+        .file-label:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        
+        .last-upload {
+            font-size: 0.75rem;
+            opacity: 0.85;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Flash Messages -->
+        <div class="alert-container">
+            {% with messages = get_flashed_messages(with_categories=true) %} 
+            {% if messages %} 
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %} 
+            {% endif %} 
+            {% endwith %}
+        </div>
+
+        <div class="container-main">
+            <h1 class="page-title">Upload Training Data</h1>
+
+            <!-- Instructions -->
+            <div class="instructions">
+                <h5><i class="fas fa-info-circle"></i> Data Upload Instructions:</h5>
+                <ul>
+                    <li><strong>EOR Data:</strong> Upload EOR data Excel file to update employee records in database</li>
+                    <li><strong>Training Data:</strong> Upload training program data Excel file to update training names in database</li>
+                    <li>All data is stored directly in the MySQL database</li>
+                </ul>
+                <p class="mb-0"><small>Note: Only .xlsx files are accepted</small></p>
+            </div>
+
+            <div class="card-grid">
+                <!-- EOR Data Card -->
+                <div class="card-upload" id="eor-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-file-excel"></i> EOR Data</span>
+                        <span class="last-upload" id="eor-last-upload">
+                            {% if eor_last_upload %}Last: {{ eor_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload EOR data to update employee records in database</p>
+                        
+                        <form id="eor-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('upload_eor') }}">
+                            <input type="hidden" name="file_type" value="eor">
+                            
+                            <label for="eor-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="eor-file-name">Choose EOR file (.xlsx)</span>
+                            </label>
+                            <input type="file" class="file-input" id="eor-file" name="file" 
+                                   accept=".xlsx" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload EOR Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Program Data Card -->
+                <div class="card-upload" id="program-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-file-excel"></i> Training Data</span>
+                        <span class="last-upload" id="program-last-upload">
+                            {% if program_last_upload %}Last: {{ program_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload training data to update program names in database</p>
+                        
+                        <form id="program-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('upload_eor') }}">
+                            <input type="hidden" name="file_type" value="program_data">
+                            
+                            <label for="program-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="program-file-name">Choose Training file (.xlsx)</span>
+                            </label>
+                            <input type="file" class="file-input" id="program-file" name="file" 
+                                   accept=".xlsx" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload Training Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Induction Card -->
+                <div class="card-upload" id="induction-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-table"></i> Induction Data</span>
+                        <span class="last-upload" id="induction-last-upload">
+                            {% if induction_last_upload %}Last: {{ induction_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload Induction program data</p>
+                        <div class="required-fields">
+                            Required fields: name, ticket_no
+                        </div>
+                        
+                        <form class="cd-upload-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('cd_data_store.upload_data') }}">
+                            <input type="hidden" name="table_name" value="induction">
+                            
+                            <label for="induction-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="induction-file-name">Choose Excel file</span>
+                            </label>
+                            <input type="file" class="file-input" id="induction-file" name="file" 
+                                   accept=".xlsx,.xls" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload Induction Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- FTA Card -->
+                <div class="card-upload" id="fta-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-table"></i> FTA Data</span>
+                        <span class="last-upload" id="fta-last-upload">
+                            {% if fta_last_upload %}Last: {{ fta_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload FTA program data</p>
+                        <div class="required-fields">
+                            Required fields: name, ticket_no
+                        </div>
+                        
+                        <form class="cd-upload-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('cd_data_store.upload_data') }}">
+                            <input type="hidden" name="table_name" value="fta">
+                            
+                            <label for="fta-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="fta-file-name">Choose Excel file</span>
+                            </label>
+                            <input type="file" class="file-input" id="fta-file" name="file" 
+                                   accept=".xlsx,.xls" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload FTA Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- JTA Card -->
+                <div class="card-upload" id="jta-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-table"></i> JTA Data</span>
+                        <span class="last-upload" id="jta-last-upload">
+                            {% if jta_last_upload %}Last: {{ jta_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload JTA program data</p>
+                        <div class="required-fields">
+                            Required fields: name, ticket_no
+                        </div>
+                        
+                        <form class="cd-upload-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('cd_data_store.upload_data') }}">
+                            <input type="hidden" name="table_name" value="jta">
+                            
+                            <label for="jta-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="jta-file-name">Choose Excel file</span>
+                            </label>
+                            <input type="file" class="file-input" id="jta-file" name="file" 
+                                   accept=".xlsx,.xls" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload JTA Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Kaushalya Card -->
+                <div class="card-upload" id="kaushalya-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-table"></i> Kaushalya Data</span>
+                        <span class="last-upload" id="kaushalya-last-upload">
+                            {% if kaushalya_last_upload %}Last: {{ kaushalya_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload Kaushalya program data</p>
+                        <div class="required-fields">
+                            Required fields: name, ticket_no
+                        </div>
+                        
+                        <form class="cd-upload-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('cd_data_store.upload_data') }}">
+                            <input type="hidden" name="table_name" value="kaushalya">
+                            
+                            <label for="kaushalya-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="kaushalya-file-name">Choose Excel file</span>
+                            </label>
+                            <input type="file" class="file-input" id="kaushalya-file" name="file" 
+                                   accept=".xlsx,.xls" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload Kaushalya Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Pragati Card -->
+                <div class="card-upload" id="pragati-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-table"></i> Pragati Data</span>
+                        <span class="last-upload" id="pragati-last-upload">
+                            {% if pragati_last_upload %}Last: {{ pragati_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload Pragati program data</p>
+                        <div class="required-fields">
+                            Required fields: name, ticket_no
+                        </div>
+                        
+                        <form class="cd-upload-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('cd_data_store.upload_data') }}">
+                            <input type="hidden" name="table_name" value="pragati">
+                            
+                            <label for="pragati-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="pragati-file-name">Choose Excel file</span>
+                            </label>
+                            <input type="file" class="file-input" id="pragati-file" name="file" 
+                                   accept=".xlsx,.xls" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload Pragati Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Lakshya Card -->
+                <div class="card-upload" id="lakshya-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-table"></i> Lakshya Data</span>
+                        <span class="last-upload" id="lakshya-last-upload">
+                            {% if lakshya_last_upload %}Last: {{ lakshya_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload Lakshya program data</p>
+                        <div class="required-fields">
+                            Required fields: name, ticket_no
+                        </div>
+                        
+                        <form class="cd-upload-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('cd_data_store.upload_data') }}">
+                            <input type="hidden" name="table_name" value="lakshya">
+                            
+                            <label for="lakshya-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="lakshya-file-name">Choose Excel file</span>
+                            </label>
+                            <input type="file" class="file-input" id="lakshya-file" name="file" 
+                                   accept=".xlsx,.xls" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload Lakshya Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Add this card inside the card-grid div, after the Live Trainer card -->
+
+<!-- Master Data Card -->
+<div class="card-upload" id="master_data-card">
+    <div class="card-header">
+        <span><i class="fas fa-table"></i> Master Training Data</span>
+        <span class="last-upload" id="master_data-last-upload">
+            {% if master_data_last_upload %}Last: {{ master_data_last_upload }}{% else %}No uploads yet{% endif %}
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="upload-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <p class="card-subtitle">Upload Master Training Data</p>
+        <div class="required-fields">
+            Required fields: training_name, participants_name
+        </div>
+        
+        <form class="cd-upload-form" method="POST" enctype="multipart/form-data" 
+              action="{{ url_for('cd_data_store.upload_data') }}">
+            <input type="hidden" name="table_name" value="master_data">
+            
+            <label for="master_data-file" class="file-label">
+                <i class="fas fa-file-excel"></i> 
+                <span id="master_data-file-name">Choose Excel file</span>
+            </label>
+            <input type="file" class="file-input" id="master_data-file" name="file" 
+                   accept=".xlsx,.xls" required>
+            
+            <button type="submit" class="upload-btn">
+                <i class="fas fa-upload"></i> Upload Master Data
+            </button>
+        </form>
+    </div>
+</div> 
+                <!-- Live Trainer Card -->
+                <div class="card-upload" id="live_trainer-card">
+                    <div class="card-header">
+                        <span><i class="fas fa-table"></i> Live Trainer Data</span>
+                        <span class="last-upload" id="live_trainer-last-upload">
+                            {% if live_trainer_last_upload %}Last: {{ live_trainer_last_upload }}{% else %}No uploads yet{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="card-subtitle">Upload Live Trainer program data</p>
+                        <div class="required-fields">
+                            Required fields: name, ticket_no
+                        </div>
+                        
+                        <form class="cd-upload-form" method="POST" enctype="multipart/form-data" 
+                              action="{{ url_for('cd_data_store.upload_data') }}">
+                            <input type="hidden" name="table_name" value="live_trainer">
+                            
+                            <label for="live_trainer-file" class="file-label">
+                                <i class="fas fa-file-excel"></i> 
+                                <span id="live_trainer-file-name">Choose Excel file</span>
+                            </label>
+                            <input type="file" class="file-input" id="live_trainer-file" name="file" 
+                                   accept=".xlsx,.xls" required>
+                            
+                            <button type="submit" class="upload-btn">
+                                <i class="fas fa-upload"></i> Upload Live Trainer Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="{{ url_for('dashboard') }}" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Success Message Container -->
+    <div class="success-container" id="success-container">
+        <div class="success-box">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="success-title">Upload Successful!</div>
+            <div class="success-content">
+                <p>Your data has been successfully updated in the database.</p>
+                <p id="upload-details">File: <span id="success-file-name"></span></p>
+                <p id="upload-program">Data Type: <span id="success-program-name"></span></p>
+            </div>
+            <div class="success-actions">
+                <button class="success-btn btn-home" onclick="window.location.href='{{ url_for('dashboard') }}'">
+                    <i class="fas fa-home"></i> Go to Home
+                </button>
+                <button class="success-btn btn-stay" onclick="document.getElementById('success-container').style.display='none'">
+                    Continue Uploading
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Function to update last uploaded timestamp
+            function updateLastUpload(cardType, timestamp) {
+                $(`#${cardType}-last-upload`).text(`Last: ${timestamp}`);
+            }
+            
+            // Function to show success message
+            function showSuccessMessage(cardType, fileName, timestamp) {
+                // Update last upload timestamp
+                updateLastUpload(cardType, timestamp);
+                
+                // Set success message details
+                const programName = $(`#${cardType}-card .card-header span:first`).text();
+                $('#success-file-name').text(fileName);
+                $('#success-program-name').text(programName);
+                
+                // Show success container
+                $('#success-container').css('display', 'flex');
+            }
+            
+            // File input handling
+            $('input[type="file"]').change(function(e) {
+                e.stopPropagation();
+                const fileName = $(this).val().split('\\').pop();
+                const inputId = $(this).attr('id');
+                const fileNameSpan = $(`#${inputId}-name`);
+                const cardId = $(this).closest('.card-upload').attr('id');
+                
+                if (fileName) {
+                    fileNameSpan.text(fileName);
+                    $(`#${cardId}`).addClass('card-highlight');
+                } else {
+                    const defaultText = inputId.includes('eor') ? 'Choose EOR file (.xlsx)' : 
+                                      inputId.includes('program') ? 'Choose Training file (.xlsx)' : 
+                                      'Choose Excel file';
+                    fileNameSpan.text(defaultText);
+                    $(`#${cardId}`).removeClass('card-highlight');
+                }
+            });
+            
+            // Form submission handling
+            $('form').submit(function(e) {
+                const form = $(this);
+                const fileInput = form.find('input[type="file"]');
+                const formId = form.attr('id') || form.find('input[name="table_name"]').val();
+                
+                if (fileInput.get(0).files.length === 0) {
+                    e.preventDefault();
+                    alert('Please select a file to upload');
+                    return false;
+                }
+                
+                const fileName = fileInput.val();
+                if (formId.includes('eor') || formId.includes('program')) {
+                    if (!fileName.endsWith('.xlsx')) {
+                        e.preventDefault();
+                        alert('Only .xlsx files are allowed');
+                        return false;
+                    }
+                } else {
+                    if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                        e.preventDefault();
+                        alert('Only Excel files (.xlsx, .xls) are allowed');
+                        return false;
+                    }
+                }
+                
+                // Show loading state
+                const submitBtn = form.find('button[type="submit"]');
+                submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+                submitBtn.prop('disabled', true);
+                
+                // Simulate successful upload (in a real app, this would be handled by the server response)
+                setTimeout(function() {
+                    const timestamp = new Date().toLocaleString();
+                    showSuccessMessage(formId.replace('-form', ''), fileName.split('\\').pop(), timestamp);
+                    submitBtn.html('<i class="fas fa-upload"></i> Upload Data');
+                    submitBtn.prop('disabled', false);
+                }, 1500);
+                
+                return true; // Allow form submission in real implementation
+                // e.preventDefault(); // Remove this line in production
+            });
+            
+            // Click on card to select file
+            $('.file-label').click(function(e) {
+                e.stopPropagation();
+                const form = $(this).closest('form');
+                const fileInput = form.find('input[type="file"]');
+                fileInput.click();
+            });
+            
+            // Check if there are success messages in the URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('upload_success')) {
+                const cardType = urlParams.get('upload_success');
+                const timestamp = urlParams.get('timestamp');
+                const fileName = urlParams.get('file_name') || 'Uploaded file';
+                
+                if (cardType && timestamp) {
+                    showSuccessMessage(cardType, fileName, timestamp);
+                    
+                    // Clear the URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
