@@ -1,405 +1,1166 @@
-# cd_data_store.py
-from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
-import pandas as pd
-from utils import get_db_connection
-from datetime import datetime
+// Initialize date pickers
+flatpickr(".datepicker", {
+  dateFormat: "d/m/Y",
+  allowInput: true,
+});
+// Auto-submit on TNI status change
+document.getElementById("tni_status").addEventListener("change", function () {
+  this.form.submit();
+});
+// Show loading state on form submit
+document.querySelector("form").addEventListener("submit", function () {
+  document.querySelector(".table-container").innerHTML = `
+        <div class="loading-state">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Applying filters...</p>
+        </div>
+    `;
+});
+// Reset pagination on filter change
+document.querySelectorAll("form select, form input").forEach((element) => {
+  if (element.name !== "page") {
+    element.addEventListener("change", function () {
+      document.querySelector('input[name="page"]').value = 1;
+    });
+  }
+});
+// Applied filters UI update
+// Applied filters UI update
+function updateAppliedFilters() {
+  const form = document.getElementById("filterForm");
+  const filtersList = document.getElementById("appliedFiltersList");
+  const filtersStrip = document.getElementById("applied-filters");
+  const formData = new FormData(form);
+  let hasFilters = false;
+  filtersList.innerHTML = "";
 
-bp = Blueprint('cd_data_store', __name__, url_prefix='/cd_data_store')
+  formData.forEach((value, key) => {
+    if (value && key !== "page" && value !== "All" && value !== "") {
+      hasFilters = true;
+      const filterItem = document.createElement("span");
+      filterItem.className = "applied-filter-item";
+      let displayKey = key.replace(/_/g, " ");
+      displayKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
+      let displayValue = value.replace(/_/g, " ");
 
-# Flexible table configuration
-TABLE_CONFIGS = {
-    'induction': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'employee_category',
-            'plant_location', 'joined_year', 'date_from', 'date_to', 'shift',
-            'learning_hours', 'training_name', 'batch_number', 'training_venue_name',
-            'faculty_name', 'subject_name', 'remark'
-        ],
-        'required_columns': ['ticket_no', 'name'],
-        'display_name': 'Induction Data'
-    },
-    'fta': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'FTA Data'
-    },
-    'jta': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'JTA Data'
-    },
-    'kaushalya': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Kaushalya Data'
-    },
-    'pragati': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Pragati Data'
-    },
-    'lakshya': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Lakshya Data'
-    },
-    'live_trainer': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Live Trainer Data'
-    }
-}
-
-# Excel headers mapping to DB columns
-COLUMN_MAPPING = {
-    'sr no': 'sr_no',
-    'ticket number': 'ticket_no',
-    'name': 'name',
-    'gender': 'gender',
-    'employee category': 'employee_category',
-    'plant location': 'plant_location',
-    'year': 'year',
-    'date(from)': 'date_from',
-    'date(to)': 'date_to',
-    'shift': 'shift',
-    'learning hours': 'learning_hours',
-    'training name': 'training_name',
-    'batch number': 'batch_number',
-    'training venue name': 'training_venue_name',
-    'faculty name': 'faculty_name',
-    'subject name': 'subject_name',
-    'remark': 'remark'
-}
-
-def validate_file(file):
-    if not file or file.filename == '':
-        return False, 'No file selected'
-    if not file.filename.endswith(('.xlsx', '.xls')):
-        return False, 'Only Excel files are allowed'
-    return True, 'File validated'
-
-def clean_value(value):
-    if pd.isna(value):
-        return None
-    if isinstance(value, (int, float)):
-        return str(value)
-    return str(value).strip()
-
-def parse_date(date_val):
-    if pd.isna(date_val):
-        return None
-    try:
-        return pd.to_datetime(date_val, errors='coerce').date()
-    except:
-        return None
-
-def process_data(df, table_config):
-    processed = []
-    errors = []
-
-    # Normalize Excel column names
-    df.columns = [str(col).strip().lower() for col in df.columns]
-
-    for idx, row in df.iterrows():
-        try:
-            data_row = {}
-            for excel_col, db_col in COLUMN_MAPPING.items():
-                if db_col in table_config['columns']:
-                    if excel_col in df.columns:
-                        value = row[excel_col]
-                        if 'date' in db_col:
-                            data_row[db_col] = parse_date(value)
-                        else:
-                            data_row[db_col] = clean_value(value)
-                    else:
-                        data_row[db_col] = None
-
-            # Check required fields
-            missing_req = [req for req in table_config['required_columns'] if not data_row.get(req)]
-            if missing_req:
-                errors.append(f"Row {idx+2}: Missing {', '.join(missing_req)}")
-                continue
-
-            processed.append(data_row)
-        except Exception as e:
-            errors.append(f"Row {idx+2}: Error - {str(e)}")
-    return processed, errors
-
-# ✅ Updated insert_data with upsert logic
-def insert_data(table_name, data):
-    """
-    Inserts new records or updates existing ones based on ticket_no.
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        columns = TABLE_CONFIGS[table_name]['columns']
-        insert_columns = [col for col in columns if col != 'sr_no']  # skip auto-increment
-        placeholders = ', '.join(['%s'] * len(insert_columns))
-        columns_str = ', '.join(insert_columns)
-
-        # Update only relevant columns (exclude sr_no and ticket_no)
-        update_cols = [col for col in insert_columns if col != 'ticket_no']
-        update_str = ', '.join([f"{col} = VALUES({col})" for col in update_cols])
-
-        sql = f"""
-        INSERT INTO {table_name} ({columns_str})
-        VALUES ({placeholders})
-        ON DUPLICATE KEY UPDATE {update_str}
-        """
-
-        values_list = [[row.get(col) for col in insert_columns] for row in data]
-        cursor.executemany(sql, values_list)
-        conn.commit()
-        return True, f"Processed {len(data)} records into {table_name} (inserted/updated)"
-    except Exception as e:
-        conn.rollback()
-        return False, f"Database error: {str(e)}"
-    finally:
-        cursor.close()
-        conn.close()
-
-@bp.route('/upload_page')
-def upload_page():
-    return render_template('admin_upload_files.html', table_configs=TABLE_CONFIGS)
-
-@bp.route('/upload', methods=['POST'])
-def upload_data():
-    try:
-        table_name = request.form.get('table_name')
-        if not table_name or table_name not in TABLE_CONFIGS:
-            flash('Invalid table selected', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        if 'file' not in request.files:
-            flash('No file provided', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        file = request.files['file']
-        is_valid, msg = validate_file(file)
-        if not is_valid:
-            flash(msg, 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        try:
-            df = pd.read_excel(file)
-        except Exception as e:
-            flash(f'Error reading Excel: {str(e)}', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        processed_data, errors = process_data(df, TABLE_CONFIGS[table_name])
-        if errors:
-            flash(f'Found {len(errors)} errors in data. First error: {errors[0]}', 'warning')
-            return redirect(url_for('cd_data_store.upload_page'))
-        if not processed_data:
-            flash('No valid data to process', 'warning')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        success, msg = insert_data(table_name, processed_data)
-        flash(msg, 'success' if success else 'danger')
-        return redirect(url_for('cd_data_store.upload_page'))
-    except Exception as e:
-        flash(f'Unexpected error: {str(e)}', 'danger')
-        return redirect(url_for('cd_data_store.upload_page'))
-
-@bp.route('/api/upload/<table_name>', methods=['POST'])
-def api_upload_data(table_name):
-    try:
-        if table_name not in TABLE_CONFIGS:
-            return jsonify({'success': False, 'message': 'Invalid table name'}), 400
-        if 'file' not in request.files:
-            return jsonify({'success': False, 'message': 'No file provided'}), 400
-        file = request.files['file']
-        is_valid, msg = validate_file(file)
-        if not is_valid:
-            return jsonify({'success': False, 'message': msg}), 400
-        try:
-            df = pd.read_excel(file)
-        except Exception as e:
-            return jsonify({'success': False, 'message': f'Error reading Excel: {str(e)}'}), 400
-
-        processed_data, errors = process_data(df, TABLE_CONFIGS[table_name])
-        if errors:
-            return jsonify({
-                'success': False,
-                'message': 'Data validation errors',
-                'errors': errors[:5],
-                'valid_records': len(processed_data)
-            }), 400
-        if not processed_data:
-            return jsonify({'success': False, 'message': 'No valid data to process'}), 400
-
-        success, msg = insert_data(table_name, processed_data)
-        if success:
-            return jsonify({
-                'success': True,
-                'message': msg,
-                'records_processed': len(processed_data)
-            }), 200
-        else:
-            return jsonify({'success': False, 'message': msg}), 500
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'Unexpected error: {str(e)}'}), 500
-
-@bp.route('/api/tables', methods=['GET'])
-def api_get_tables():
-    tables_info = {
-        name: {
-            'display_name': config['display_name'],
-            'columns': config['columns'],
-            'required_columns': config['required_columns']
+      // Special formatting for fiscal year
+      if (key === "fiscal_year") {
+        const year = parseInt(value);
+        if (!isNaN(year)) {
+          const nextYear = year + 1;
+          const nextYearShort = nextYear.toString().slice(-2); // Get last 2 digits
+          displayValue = `FY ${year}-${nextYearShort}`;
+          displayKey = "Fiscal Year"; // Keep the key as "Fiscal Year"
         }
-        for name, config in TABLE_CONFIGS.items()
-    }
-    return jsonify({'success': True, 'tables': tables_info}), 200
-# cd_data_store.py
+      }
 
-# Add master_data to TABLE_CONFIGS
-TABLE_CONFIGS = {
-    'induction': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'employee_category',
-            'plant_location', 'joined_year', 'date_from', 'date_to', 'shift',
-            'learning_hours', 'training_name', 'batch_number', 'training_venue_name',
-            'faculty_name', 'subject_name', 'remark'
-        ],
-        'required_columns': ['ticket_no', 'name'],
-        'display_name': 'Induction Data'
-    },
-    'fta': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'FTA Data'
-    },
-    'jta': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'JTA Data'
-    },
-    'kaushalya': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Kaushalya Data'
-    },
-    'pragati': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Pragati Data'
-    },
-    'lakshya': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Lakshya Data'
-    },
-    'live_trainer': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Live Trainer Data'
-    },
-    'master_data': {
-        'columns': [
-            'calendar_month', 'month_report_pmo_21_20', 'month_cd_key_26_25', 
-            'start_date', 'end_date', 'start_time', 'end_time', 'learning_hours', 
-            'training_name', 'pmo_training_category', 'pl_category', 
-            'brsr_sq_123_category', 'calendar_need_base_reschedule', 'tni_non_tni', 
-            'location_hall', 'faculty_1', 'faculty_2', 'faculty_3', 'faculty_4', 
-            'per_no', 'participants_name', 'bc_no', 'gender', 'employee_group', 
-            'department', 'factory', 'nomination_received_from', 'mobile_no', 
-            'email', 'cordi_name', 'submission_timestamp', 'program_id', 
-            'day_1_attendance', 'day_2_attendance', 'day_3_attendance', 'last_updated'
-        ],
-        'required_columns': ['training_name', 'participants_name'],
-        'display_name': 'Master Training Data'
+      filterItem.innerHTML = `<span class="filter-key">${displayKey}:</span> <span class="filter-value">${displayValue}</span>`;
+      filtersList.appendChild(filterItem);
     }
+  });
+
+  filtersStrip.style.display = hasFilters ? "block" : "none";
+  return hasFilters;
+}
+// DOM ready
+document.addEventListener("DOMContentLoaded", function () {
+  const hasQueryParams = window.location.search.includes("=");
+  const hasFilters = updateAppliedFilters();
+  // Store form submission flag
+  document.getElementById("filterForm").addEventListener("submit", function () {
+    sessionStorage.setItem("filterSubmitted", "true");
+  });
+  // After reload, update filters but don't scroll
+  if (sessionStorage.getItem("filterSubmitted") === "true") {
+    sessionStorage.removeItem("filterSubmitted");
+    setTimeout(() => {
+      updateAppliedFilters();
+    }, 150); // Short delay to ensure layout is ready
+  }
+});
+// Display current date
+function displayCurrentDate() {
+  const currentDate = new Date();
+  const options = { year: "numeric", month: "long", day: "numeric" };
+  const formattedDate = currentDate.toLocaleDateString("en-US", options);
+  const dateElement = document.getElementById("current-date");
+  if (dateElement) {
+    dateElement.textContent = "Data updated as of " + formattedDate + ".";
+  }
+}
+displayCurrentDate();
+// Update date at midnight
+const now = new Date();
+const midnight = new Date(
+  now.getFullYear(),
+  now.getMonth(),
+  now.getDate() + 1,
+  0,
+  0,
+  0
+);
+const timeUntilMidnight = midnight - now;
+setTimeout(function () {
+  displayCurrentDate();
+  setInterval(displayCurrentDate, 86400000);
+}, timeUntilMidnight);
+// Enhanced table toggle functionality
+document.addEventListener("DOMContentLoaded", function () {
+  const toggleBtn = document.getElementById("toggleTableBtn");
+  const tableContainer = document.getElementById("resultsTable");
+  // Check if we have table data to toggle
+  if (toggleBtn && tableContainer) {
+    // Check if table was previously visible
+    const isTableVisible = localStorage.getItem("tableVisible") === "true";
+    // Set initial state
+    if (isTableVisible) {
+      tableContainer.style.display = "block";
+      toggleBtn.innerHTML = '<i class="fas fa-eye me-2"></i>Hide Table Data';
+      toggleBtn.classList.remove("pulse");
+    } else {
+      tableContainer.style.display = "none";
+      toggleBtn.innerHTML =
+        '<i class="fas fa-eye-slash me-2"></i>Show Table Data';
+      // Add pulse animation only if there are records
+      if (document.querySelector(".table-responsive")) {
+        toggleBtn.classList.add("pulse");
+      }
+    }
+    // Toggle button click event
+    toggleBtn.addEventListener("click", function () {
+      if (tableContainer.style.display === "none") {
+        tableContainer.style.display = "block";
+        toggleBtn.innerHTML = '<i class="fas fa-eye me-2"></i>Hide Table Data';
+        toggleBtn.classList.remove("pulse");
+        localStorage.setItem("tableVisible", "true");
+        // Add a slight highlight effect to the table
+        tableContainer.style.opacity = "0.9";
+        setTimeout(() => {
+          tableContainer.style.opacity = "1";
+        }, 300);
+      } else {
+        tableContainer.style.display = "none";
+        toggleBtn.innerHTML =
+          '<i class="fas fa-eye-slash me-2"></i>Show Table Data';
+        // Add pulse animation only if there are records
+        if (document.querySelector(".table-responsive")) {
+          toggleBtn.classList.add("pulse");
+        }
+        localStorage.setItem("tableVisible", "false");
+      }
+    });
+  }
+  // Auto-show table if it contains data and we're on page 3
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.toString() && window.location.hash === "#page3") {
+    setTimeout(() => {
+      if (tableContainer && document.querySelector(".table-responsive")) {
+        tableContainer.style.display = "block";
+        if (toggleBtn) {
+          toggleBtn.innerHTML =
+            '<i class="fas fa-eye me-2"></i>Hide Table Data';
+          toggleBtn.classList.remove("pulse");
+        }
+        localStorage.setItem("tableVisible", "true");
+      }
+    }, 500);
+  }
+  // Add keyboard shortcut (Alt+T) to toggle table
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey && e.key.toLowerCase() === "t") {
+      e.preventDefault();
+      if (toggleBtn) {
+        toggleBtn.click();
+      }
+    }
+  });
+});
+document.addEventListener("DOMContentLoaded", function () {
+  const filterStrip = document.getElementById("applied-filters");
+
+  // Update the current date
+  function updateDate() {
+    const now = new Date();
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    document.getElementById(
+      "current-date"
+    ).textContent = now.toLocaleDateString(undefined, options);
+  }
+  updateDate();
+  // Update date every minute
+  setInterval(updateDate, 60000);
+});
+document.addEventListener("DOMContentLoaded", function () {
+  const filterToggleBtn = document.getElementById("filterToggleBtn");
+  const filterSidePanel = document.getElementById("filterSidePanel");
+  const filterControlArea = document.getElementById("filterControlArea");
+  const filterLabelContainer = document.getElementById("filterLabelContainer"); // Add this line
+  // Toggle filter panel when clicking the toggle button
+  filterToggleBtn.addEventListener("click", function () {
+    filterSidePanel.classList.toggle("active");
+    filterControlArea.classList.toggle("panel-open");
+  });
+  // Toggle filter panel when clicking the "Choose Filter" label
+  filterLabelContainer.addEventListener("click", function () {
+    filterSidePanel.classList.toggle("active");
+    filterControlArea.classList.toggle("panel-open");
+  });
+  // Close filter panel when clicking outside
+  document.addEventListener("click", function (event) {
+    if (
+      !filterSidePanel.contains(event.target) &&
+      !filterToggleBtn.contains(event.target) &&
+      !filterControlArea.contains(event.target) &&
+      filterSidePanel.classList.contains("active")
+    ) {
+      filterSidePanel.classList.remove("active");
+      filterControlArea.classList.remove("panel-open");
+    }
+  });
+  // Hide filter panel when filters are applied
+  const filterForm = document.getElementById("filterForm");
+  if (filterForm) {
+    filterForm.addEventListener("submit", function () {
+      filterSidePanel.classList.remove("active");
+      filterControlArea.classList.remove("panel-open");
+    });
+  }
+  // Also hide when reset button is clicked
+  const resetButton = document.querySelector(
+    "a[href=\"{{ url_for('view_bp.view_master_data') }}\"]"
+  );
+  if (resetButton) {
+    resetButton.addEventListener("click", function () {
+      filterSidePanel.classList.remove("active");
+      filterControlArea.classList.remove("panel-open");
+    });
+  }
+  // And when export button is clicked
+  const exportButton = document.querySelector('a[href*="download_excel"]');
+  if (exportButton) {
+    exportButton.addEventListener("click", function () {
+      filterSidePanel.classList.remove("active");
+      filterControlArea.classList.remove("panel-open");
+    });
+  }
+});
+
+// Chart selection and download functionality
+document.addEventListener("DOMContentLoaded", function () {
+  initializeChartSelection();
+});
+
+function initializeChartSelection() {
+  const availableCharts = [
+    {
+      id: "chartEOR-container",
+      title: "EOR Count by Male/Female",
+      icon: "fa-chart-pie",
+    },
+    {
+      id: "employeeGroupChart-container",
+      title: "Employee Distribution by Group",
+      icon: "fa-chart-bar",
+    },
+    {
+      id: "ulEorChart-container",
+      title: "Permanent technician vs Unique Learners",
+      icon: "fa-chart-line",
+    },
+    {
+      id: "annualYtdChart-container",
+      title: "TNI YTD (Year Till Date) Status",
+      icon: "fa-chart-area",
+    },
+    {
+      id: "16HourChart-container",
+      title: "16+ Learning hours compliance YTD Status",
+      icon: "fa-chart-pie",
+    },
+    {
+      id: "sheStackedChart-container",
+      title: "6+ Safety Learning hours compliance YTD Status",
+      icon: "fa-chart-bar",
+    },
+    { id: "pl1Chart-container", title: "PL1 YTD Status", icon: "fa-chart-pie" },
+    { id: "pl2Chart-container", title: "PL2 YTD Status", icon: "fa-chart-pie" },
+    { id: "pl3Chart-container", title: "PL3 YTD Status", icon: "fa-chart-pie" },
+    {
+      id: "monthwiseYTDChart-container",
+      title: "TNI Month-wise YTD Plan vs Actual Coverage vs Adherence",
+      icon: "fa-chart-line",
+    },
+    {
+      id: "sheCategoryChart-container",
+      title: "Annual Safety Coverage Status",
+      icon: "fa-chart-bar",
+    },
+    {
+      id: "pmoCategoryChart-container",
+      title: "Annual PMO Category Coverage Status",
+      icon: "fa-chart-bar",
+    },
+    {
+      id: "chartCESS-container",
+      title: "Annual CESS Training Coverage Status",
+      icon: "fa-chart-bar",
+    },
+    {
+      id: "chartDigital-container",
+      title: "Annual Digital Training Coverage Status",
+      icon: "fa-chart-bar",
+    },
+    {
+      id: "chartFS-container",
+      title: "Annual Functional Skills Coverage Status",
+      icon: "fa-chart-bar",
+    },
+    {
+      id: "chartPS-container",
+      title: "Annual Professional Skills Coverage Status",
+      icon: "fa-chart-bar",
+    },
+    {
+      id: "chartSHE-container",
+      title: "Annual Safety Training Coverage Status",
+      icon: "fa-chart-bar",
+    },
+    {
+      id: "chartSust-container",
+      title: "Annual Sustainability Coverage Status",
+      icon: "fa-chart-bar",
+    },
+  ];
+
+  const chartSelectionList = document.getElementById("chartSelectionList");
+
+  if (chartSelectionList) {
+    availableCharts.forEach((chart) => {
+      const chartItem = document.createElement("div");
+      chartItem.className = "chart-selection-item";
+      chartItem.innerHTML = `
+        <input type="checkbox" id="chart-${chart.id}" value="${chart.id}">
+        <div class="chart-selection-icon"><i class="fas ${chart.icon}"></i></div>
+        <div class="chart-selection-title">${chart.title}</div>
+      `;
+      chartSelectionList.appendChild(chartItem);
+
+      const checkbox = chartItem.querySelector('input[type="checkbox"]');
+
+      // ✅ Prevent dropdown from closing when clicking inside chart item
+      chartItem.addEventListener("click", function (e) {
+        e.stopPropagation(); // Important to keep dropdown open
+        if (e.target.tagName !== "INPUT") {
+          checkbox.checked = !checkbox.checked;
+          checkbox.dispatchEvent(new Event("change"));
+        }
+      });
+
+      // Prevent dropdown from closing when clicking checkbox directly
+      checkbox.addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+
+      // Update download button state
+      checkbox.addEventListener("change", updateDownloadButtonState);
+    });
+  }
+
+  // Select all functionality
+  const selectAllCharts = document.getElementById("selectAllCharts");
+  if (selectAllCharts) {
+    selectAllCharts.addEventListener("click", function (e) {
+      e.stopPropagation(); // prevent dropdown close
+      const checkboxes = chartSelectionList.querySelectorAll(
+        'input[type="checkbox"]'
+      );
+      const allChecked = Array.from(checkboxes).every((cb) => cb.checked);
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = !allChecked;
+        checkbox.dispatchEvent(new Event("change"));
+      });
+      updateDownloadButtonState();
+    });
+  }
+
+  // ✅ FIXED: Download selected charts with proper data label handling
+  const downloadSelectedCharts = document.getElementById(
+    "downloadSelectedCharts"
+  );
+  if (downloadSelectedCharts) {
+    downloadSelectedCharts.addEventListener("click", async function (e) {
+      e.stopPropagation(); // prevent dropdown close
+      const selectedCharts = [];
+      chartSelectionList
+        .querySelectorAll('input[type="checkbox"]:checked')
+        .forEach((cb) => selectedCharts.push(cb.value));
+
+      if (selectedCharts.length > 0) {
+        try {
+          // Show loading state
+          downloadSelectedCharts.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Downloading...';
+          downloadSelectedCharts.disabled = true;
+
+          for (const chartId of selectedCharts) {
+            await downloadChartAsEnlarged(chartId);
+
+            // Small delay between downloads to prevent browser overload
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+
+          // Reset button state
+          downloadSelectedCharts.innerHTML =
+            '<i class="fas fa-download"></i> Download Selected Charts';
+          downloadSelectedCharts.disabled = false;
+        } catch (error) {
+          console.error("Error downloading charts:", error);
+          alert("Error downloading charts. Please try again.");
+
+          // Reset button state on error
+          downloadSelectedCharts.innerHTML =
+            '<i class="fas fa-download"></i> Download Selected Charts';
+          downloadSelectedCharts.disabled = false;
+        }
+      }
+    });
+  }
+
+  function updateDownloadButtonState() {
+    const checkedBoxes = chartSelectionList.querySelectorAll(
+      'input[type="checkbox"]:checked'
+    );
+    const downloadButton = document.getElementById("downloadSelectedCharts");
+    if (downloadButton) downloadButton.disabled = checkedBoxes.length === 0;
+  }
 }
 
-# Update COLUMN_MAPPING to include master data columns
-COLUMN_MAPPING = {
-    'sr no': 'sr_no',
-    'ticket number': 'ticket_no',
-    'name': 'name',
-    'gender': 'gender',
-    'employee category': 'employee_category',
-    'plant location': 'plant_location',
-    'year': 'year',
-    'date(from)': 'date_from',
-    'date(to)': 'date_to',
-    'shift': 'shift',
-    'learning hours': 'learning_hours',
-    'training name': 'training_name',
-    'batch number': 'batch_number',
-    'training venue name': 'training_venue_name',
-    'faculty name': 'faculty_name',
-    'subject name': 'subject_name',
-    'remark': 'remark',
-    # Master data mappings
-    'calender month': 'calendar_month',
-    'month report pmo 21-20': 'month_report_pmo_21_20',
-    'month cd/key 26-25': 'month_cd_key_26_25',
-    'start date': 'start_date',
-    'end date': 'end_date',
-    'start time': 'start_time',
-    'end time': 'end_time',
-    'pmo training category': 'pmo_training_category',
-    'pl category': 'pl_category',
-    'brsr sq 1,2,3 category': 'brsr_sq_123_category',
-    'calendar/need base/reschedule': 'calendar_need_base_reschedule',
-    'tni / non tni': 'tni_non_tni',
-    'location hall': 'location_hall',
-    'faculty 1': 'faculty_1',
-    'faculty 2': 'faculty_2',
-    'faculty 3': 'faculty_3',
-    'faculty 4': 'faculty_4',
-    'per. no': 'per_no',
-    'participants name': 'participants_name',
-    'bc no': 'bc_no',
-    'employee group': 'employee_group',
-    'department': 'department',
-    'factory': 'factory',
-    'nomination recieved from': 'nomination_received_from'
+// ✅ FIXED: Enhanced download function with proper SHE chart handling
+async function downloadChartAsEnlarged(chartId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const chartContainer = document.getElementById(chartId);
+      if (!chartContainer) {
+        reject(new Error(`Chart container not found: ${chartId}`));
+        return;
+      }
+
+      const originalCanvas = chartContainer.querySelector("canvas");
+      if (!originalCanvas) {
+        reject(new Error(`Canvas not found in chart: ${chartId}`));
+        return;
+      }
+
+      const originalChart = Chart.getChart(originalCanvas);
+      if (!originalChart) {
+        reject(new Error(`Chart instance not found: ${chartId}`));
+        return;
+      }
+
+      console.log(`Downloading chart: ${chartId}`, originalChart.config);
+
+      // ✅ DEBUG: Log specific information for SHE chart
+      if (chartId.includes("she") || chartId.includes("SHE")) {
+        console.log("SHE Chart detected - Config:", {
+          type: originalChart.config.type,
+          indexAxis: originalChart.config.options?.indexAxis,
+          datasets: originalChart.config.data?.datasets?.map((d) => ({
+            label: d.label,
+            data: d.data,
+            type: d.type,
+          })),
+        });
+      }
+
+      // ✅ Use enhanced cloning function
+      const enlargedConfig = safeCloneChartConfig(originalChart);
+
+      // Create temporary container for high-quality rendering
+      const tempContainer = document.createElement("div");
+      tempContainer.style.position = "fixed";
+      tempContainer.style.left = "-9999px";
+      tempContainer.style.top = "0";
+      tempContainer.style.width = "1200px";
+      tempContainer.style.height = "800px";
+      tempContainer.style.backgroundColor = "#ffffff";
+      tempContainer.style.padding = "40px";
+      tempContainer.style.boxSizing = "border-box";
+      tempContainer.style.zIndex = "10000";
+      document.body.appendChild(tempContainer);
+
+      // Create canvas for high-quality download
+      const downloadCanvas = document.createElement("canvas");
+      downloadCanvas.width = 1200;
+      downloadCanvas.height = 800;
+      downloadCanvas.style.width = "1120px"; // Account for padding
+      downloadCanvas.style.height = "720px";
+      downloadCanvas.style.backgroundColor = "#ffffff";
+
+      tempContainer.appendChild(downloadCanvas);
+
+      // Create the chart with enhanced configuration
+      const downloadCtx = downloadCanvas.getContext("2d");
+
+      // Wait for container to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const downloadChart = new Chart(downloadCtx, enlargedConfig);
+
+      // ✅ FIXED: Longer wait time specifically for SHE charts
+      const isSHEChart = chartId.includes("she") || chartId.includes("SHE");
+      const isHorizontalBar = enlargedConfig.options?.indexAxis === "y";
+
+      // Longer wait time for complex charts with data labels
+      const waitTime = isSHEChart ? 2500 : isHorizontalBar ? 2000 : 1500;
+      console.log(`Waiting ${waitTime}ms for ${chartId} to render...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+
+      // Create final canvas for download
+      const finalCanvas = document.createElement("canvas");
+      finalCanvas.width = 1200;
+      finalCanvas.height = 800;
+      const finalCtx = finalCanvas.getContext("2d");
+
+      // Set white background
+      finalCtx.fillStyle = "#ffffff";
+      finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+      // Draw the chart onto final canvas
+      finalCtx.drawImage(
+        downloadCanvas,
+        0,
+        0,
+        finalCanvas.width,
+        finalCanvas.height
+      );
+
+      // Convert to image and download
+      const imgData = finalCanvas.toDataURL("image/png", 1.0);
+      const link = document.createElement("a");
+      link.href = imgData;
+      link.download = `${getChartTitle(chartId)}_${new Date().getTime()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      downloadChart.destroy();
+      document.body.removeChild(tempContainer);
+
+      resolve();
+    } catch (error) {
+      console.error("Error downloading chart:", error);
+
+      // ✅ FALLBACK: Try html2canvas if available for SHE charts
+      if (
+        (chartId.includes("she") || chartId.includes("SHE")) &&
+        typeof html2canvas !== "undefined"
+      ) {
+        console.log("Trying html2canvas fallback for SHE chart");
+        try {
+          await downloadChartScreenshot(chartId);
+          resolve();
+          return;
+        } catch (fallbackError) {
+          console.error("html2canvas fallback also failed:", fallbackError);
+        }
+      }
+
+      reject(error);
+    }
+  });
 }
 
-# Add parse_time function for handling time columns
-def parse_time(time_val):
-    if pd.isna(time_val):
-        return None
-    try:
-        # Try to parse as time
-        return pd.to_datetime(time_val, errors='coerce').time()
-    except:
-        return None
+// ✅ FIXED: Enhanced safe chart configuration cloning with proper SHE chart handling
+function safeCloneChartConfig(originalChart) {
+  const originalConfig = originalChart.config;
 
-# Update process_data function to handle time columns and initialize all columns
-def process_data(df, table_config):
-    processed = []
-    errors = []
+  // Create a clean configuration object
+  const config = {
+    type: originalConfig.type,
+    data: {
+      labels: [...(originalConfig.data.labels || [])],
+      datasets: [],
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 0, // Disable animations for consistent exports
+      },
+      plugins: {},
+    },
+  };
 
-    # Normalize Excel column names
-    df.columns = [str(col).strip().lower() for col in df.columns]
+  // ✅ FIXED: Enhanced dataset cloning with proper indexAxis handling for SHE chart
+  if (originalConfig.data && originalConfig.data.datasets) {
+    originalConfig.data.datasets.forEach((originalDataset, index) => {
+      const dataset = {
+        label: originalDataset.label || `Dataset ${index + 1}`,
+        data: [...(originalDataset.data || [])],
+        type: originalDataset.type, // Preserve type (bar/line)
+        yAxisID: originalDataset.yAxisID, // ✅ CRITICAL: Preserve yAxisID
+        order: originalDataset.order, // ✅ CRITICAL: Preserve dataset order
+        hidden: originalDataset.hidden,
+      };
 
-    for idx, row in df.iterrows():
-        try:
-            # Initialize data_row with None for all columns
-            data_row = {col: None for col in table_config['columns']}
-            
-            for excel_col, db_col in COLUMN_MAPPING.items():
-                if db_col in table_config['columns']:
-                    if excel_col in df.columns:
-                        value = row[excel_col]
-                        if 'date' in db_col:
-                            data_row[db_col] = parse_date(value)
-                        elif 'time' in db_col:
-                            data_row[db_col] = parse_time(value)
-                        else:
-                            data_row[db_col] = clean_value(value)
+      // ✅ CRITICAL FIX: Preserve indexAxis for horizontal bar charts (like SHE chart)
+      if (originalConfig.options && originalConfig.options.indexAxis) {
+        config.options.indexAxis = originalConfig.options.indexAxis;
+      }
 
-            # Check required fields
-            missing_req = [req for req in table_config['required_columns'] if not data_row.get(req)]
-            if missing_req:
-                errors.append(f"Row {idx+2}: Missing {', '.join(missing_req)}")
-                continue
+      // Handle background colors - ensure arrays are properly cloned
+      if (Array.isArray(originalDataset.backgroundColor)) {
+        dataset.backgroundColor = [...originalDataset.backgroundColor];
+      } else if (originalDataset.backgroundColor) {
+        dataset.backgroundColor = originalDataset.backgroundColor;
+      } else {
+        // Provide fallback colors
+        const fallbackColors = [
+          "rgba(54, 162, 235, 0.8)",
+          "rgba(255, 99, 132, 0.8)",
+          "rgba(75, 192, 192, 0.8)",
+          "rgba(255, 159, 64, 0.8)",
+          "rgba(153, 102, 255, 0.8)",
+        ];
+        dataset.backgroundColor = fallbackColors[index % fallbackColors.length];
+      }
 
-            processed.append(data_row)
-        except Exception as e:
-            errors.append(f"Row {idx+2}: Error - {str(e)}")
-    return processed, errors
+      // Handle border colors
+      if (Array.isArray(originalDataset.borderColor)) {
+        dataset.borderColor = [...originalDataset.borderColor];
+      } else if (originalDataset.borderColor) {
+        dataset.borderColor = originalDataset.borderColor;
+      } else {
+        dataset.borderColor = dataset.backgroundColor;
+      }
+
+      // Copy other critical properties
+      const propertiesToCopy = [
+        "borderWidth",
+        "fill",
+        "tension",
+        "radius",
+        "cutout",
+        "pointRadius",
+        "pointBackgroundColor",
+        "pointBorderColor",
+        "pointBorderWidth",
+        "pointHoverRadius",
+        "barPercentage",
+        "categoryPercentage",
+        "barThickness",
+        "maxBarThickness",
+        "indexAxis", // ✅ ADDED: Preserve indexAxis at dataset level if exists
+      ];
+
+      propertiesToCopy.forEach((prop) => {
+        if (originalDataset[prop] !== undefined) {
+          dataset[prop] = originalDataset[prop];
+        }
+      });
+
+      config.data.datasets.push(dataset);
+    });
+  }
+
+  // ✅ FIXED: Enhanced options cloning with proper scales configuration for SHE chart
+  if (originalConfig.options) {
+    // Clone plugins
+    if (originalConfig.options.plugins) {
+      config.options.plugins = { ...originalConfig.options.plugins };
+
+      // Clone title with enhanced size
+      if (originalConfig.options.plugins.title) {
+        config.options.plugins.title = {
+          ...originalConfig.options.plugins.title,
+          display: true,
+          font: {
+            ...(originalConfig.options.plugins.title.font || {}),
+            size: 24,
+            weight: "bold",
+          },
+        };
+      }
+
+      // Clone legend with enhanced settings
+      if (originalConfig.options.plugins.legend) {
+        config.options.plugins.legend = {
+          ...originalConfig.options.plugins.legend,
+          display: true,
+          position: originalConfig.options.plugins.legend.position || "top",
+          labels: {
+            ...originalConfig.options.plugins.legend.labels,
+            font: {
+              size: 18,
+              weight: "bold",
+            },
+            padding: 20,
+            usePointStyle: true,
+            boxWidth: 14,
+          },
+        };
+      }
+
+      // ✅ CRITICAL FIX: Enhanced datalabels scaling for exports
+      if (originalConfig.options.plugins.datalabels) {
+        config.options.plugins.datalabels = {
+          ...originalConfig.options.plugins.datalabels,
+          font: {
+            ...(originalConfig.options.plugins.datalabels.font || {}),
+            size: 18,
+            weight: "bold",
+          },
+          align: originalConfig.options.plugins.datalabels.align || "center",
+          anchor: originalConfig.options.plugins.datalabels.anchor || "center",
+          formatter: originalConfig.options.plugins.datalabels.formatter,
+          padding: 6,
+        };
+      }
+    }
+
+    // ✅ CRITICAL FIX: Enhanced scales cloning for horizontal bar charts
+    if (originalConfig.options.scales) {
+      config.options.scales = {};
+
+      Object.keys(originalConfig.options.scales).forEach((scaleId) => {
+        const originalScale = originalConfig.options.scales[scaleId];
+        if (originalScale) {
+          config.options.scales[scaleId] = { ...originalScale };
+
+          // Ensure scale is visible in exports
+          config.options.scales[scaleId].display = true;
+
+          // Enhance ticks with larger font
+          if (originalScale.ticks) {
+            config.options.scales[scaleId].ticks = {
+              ...originalScale.ticks,
+              font: {
+                ...(originalScale.ticks.font || {}),
+                size: 14,
+                weight: "bold",
+              },
+              callback: originalScale.ticks.callback,
+            };
+          }
+
+          // Enhance title with larger font
+          if (originalScale.title) {
+            config.options.scales[scaleId].title = {
+              ...originalScale.title,
+              display: true,
+              font: {
+                ...(originalScale.title.font || {}),
+                size: 16,
+                weight: "bold",
+              },
+            };
+          }
+
+          // Ensure grid lines are preserved
+          if (originalScale.grid) {
+            config.options.scales[scaleId].grid = {
+              ...originalScale.grid,
+            };
+          }
+        }
+      });
+    }
+
+    // ✅ CRITICAL FIX: Preserve indexAxis for horizontal bar charts (SHE chart)
+    if (originalConfig.options.indexAxis) {
+      config.options.indexAxis = originalConfig.options.indexAxis;
+    }
+
+    // Copy layout if it exists
+    if (originalConfig.options.layout) {
+      config.options.layout = { ...originalConfig.options.layout };
+
+      // Ensure proper padding for exports
+      if (!config.options.layout.padding) {
+        config.options.layout.padding = {
+          top: 20,
+          right: 20,
+          bottom: 20,
+          left: 20,
+        };
+      }
+    }
+  }
+
+  // ✅ FIXED: Enhanced plugin preservation for SHE chart
+  if (originalConfig.plugins && Array.isArray(originalConfig.plugins)) {
+    config.plugins = [...originalConfig.plugins];
+
+    // Enhance any custom plugins that handle data labels
+    config.plugins = config.plugins.map((plugin) => {
+      if (plugin && plugin.id === "valueLabelsPlugin") {
+        return {
+          ...plugin,
+          afterDatasetsDraw: function (chart) {
+            const { ctx, data, chartArea } = chart;
+            const topClamp = chartArea.top + 25;
+            ctx.save();
+            data.datasets.forEach((ds, dsIndex) => {
+              const meta = chart.getDatasetMeta(dsIndex);
+              meta.data.forEach((point, i) => {
+                let val = ds.data[i];
+                if (val == null || isNaN(val)) return;
+
+                // ✅ Only add % for Adherence dataset
+                if (ds.label && ds.label.includes("%")) {
+                  val = val + "%";
+                }
+
+                const pos = point.tooltipPosition
+                  ? point.tooltipPosition()
+                  : { x: point.x, y: point.y };
+                let x, y, color;
+
+                // ✅ FIXED: Better handling for horizontal bar charts (SHE chart)
+                if (chart.options.indexAxis === "y") {
+                  // Horizontal bars - position labels differently
+                  const xZero = chart.scales.x.getPixelForValue(0);
+                  const barWidth = Math.abs(point.x - xZero);
+                  x = point.x + (point.x < xZero ? -12 : 12);
+                  if (barWidth < 30) x = point.x - 12;
+                  color = "#000";
+
+                  // Draw text for horizontal bars
+                  ctx.font = "bold 16px Segoe UI, Arial, sans-serif";
+                  ctx.textAlign = point.x < xZero ? "right" : "left";
+                  ctx.textBaseline = "middle";
+                  ctx.fillStyle = "#000000";
+                  ctx.fillText(val, x, point.y);
+                } else {
+                  // Vertical bars
+                  if (ds.type === "bar") {
+                    const yZero = chart.scales.y.getPixelForValue(0);
+                    const barHeight = Math.abs(point.y - yZero);
+                    y = point.y + (point.y < yZero ? -12 : 12);
+                    if (barHeight < 30) y = point.y - 12;
+                    color = "#000";
+                  } else {
+                    // Line charts
+                    y = point.y - 20;
+                    color = ds.borderColor || "#000";
+
+                    // Special handling for line charts to avoid overlap
+                    if (dsIndex > 0) {
+                      const prevMeta = chart.getDatasetMeta(dsIndex - 1);
+                      if (prevMeta && prevMeta.data[i]) {
+                        const prevPoint = prevMeta.data[i];
+                        if (Math.abs(point.y - prevPoint.y) < 25) {
+                          y = point.y - 35;
+                        }
+                      }
+                    }
+                  }
+
+                  if (y < topClamp) y = topClamp;
+
+                  // Enhanced font styling
+                  ctx.font = "bold 16px Segoe UI, Arial, sans-serif";
+                  ctx.textAlign = "center";
+                  ctx.textBaseline = "middle";
+                  ctx.fillStyle = "#000000";
+                  ctx.fillText(val, pos.x, y);
+                }
+              });
+            });
+            ctx.restore();
+          },
+        };
+      }
+
+      // Handle ChartDataLabels plugin specifically
+      if (
+        plugin &&
+        typeof plugin === "function" &&
+        plugin.id === "datalabels"
+      ) {
+        // Ensure ChartDataLabels plugin is properly configured
+        return {
+          ...plugin,
+          defaults: {
+            ...(plugin.defaults || {}),
+            font: {
+              ...((plugin.defaults && plugin.defaults.font) || {}),
+              size: 18,
+              weight: "bold",
+            },
+          },
+        };
+      }
+
+      return plugin;
+    });
+  }
+
+  console.log("Enhanced cloned config for SHE chart:", config);
+  return config;
+}
+
+// ✅ ENHANCED: Helper function to ensure proper bar+line chart configuration
+function createComboChartConfig(baseConfig) {
+  // Ensure datasets have proper order and yAxisID for combo charts
+  const hasLine = baseConfig.data.datasets.some((ds) => ds.type === "line");
+  const hasBar = baseConfig.data.datasets.some(
+    (ds) => !ds.type || ds.type === "bar"
+  );
+
+  if (hasLine && hasBar) {
+    // Set proper order: lines on top of bars
+    baseConfig.data.datasets.forEach((dataset, index) => {
+      if (dataset.type === "line") {
+        dataset.order = 1; // Lines render on top
+      } else {
+        dataset.order = 2; // Bars render below
+      }
+
+      // Ensure yAxisID is properly set
+      if (
+        dataset.type === "line" &&
+        !dataset.yAxisID &&
+        baseConfig.options.scales?.percentageAxis
+      ) {
+        dataset.yAxisID = "percentageAxis";
+      }
+
+      // ✅ ENHANCED: Ensure line chart data points are visible
+      if (dataset.type === "line") {
+        dataset.pointRadius = 6; // Increased from default
+        dataset.pointHoverRadius = 8;
+        dataset.pointBorderWidth = 2;
+      }
+    });
+
+    // Ensure scales are properly configured
+    if (!baseConfig.options.scales) {
+      baseConfig.options.scales = {};
+    }
+
+    if (
+      !baseConfig.options.scales.y &&
+      !baseConfig.options.scales.percentageAxis
+    ) {
+      baseConfig.options.scales = {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "Employee Counts",
+            font: {
+              size: 16,
+              weight: "bold",
+            },
+          },
+          ticks: {
+            font: {
+              size: 14,
+            },
+          },
+        },
+        percentageAxis: {
+          position: "right",
+          beginAtZero: true,
+          ticks: {
+            callback: (v) => v + "%",
+            font: {
+              size: 14,
+            },
+          },
+          title: {
+            display: true,
+            text: "Adherence %",
+            font: {
+              size: 16,
+              weight: "bold",
+            },
+          },
+          grid: { drawOnChartArea: false },
+        },
+      };
+    }
+  }
+
+  return baseConfig;
+}
+
+// ✅ ALTERNATIVE: Simple screenshot approach using html2canvas
+async function downloadChartScreenshot(chartId) {
+  return new Promise((resolve, reject) => {
+    try {
+      const chartContainer = document.getElementById(chartId);
+      if (!chartContainer) {
+        reject(new Error(`Chart container not found: ${chartId}`));
+        return;
+      }
+
+      // Check if html2canvas is available
+      if (typeof html2canvas === "undefined") {
+        reject(
+          new Error(
+            'html2canvas library not loaded. Please add: <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>'
+          )
+        );
+        return;
+      }
+
+      // Create a temporary container to ensure proper rendering
+      const tempContainer = document.createElement("div");
+      tempContainer.style.position = "fixed";
+      tempContainer.style.left = "0";
+      tempContainer.style.top = "0";
+      tempContainer.style.width = "1200px";
+      tempContainer.style.height = "800px";
+      tempContainer.style.backgroundColor = "#ffffff";
+      tempContainer.style.padding = "20px";
+      tempContainer.style.zIndex = "10000";
+      tempContainer.style.boxSizing = "border-box";
+
+      // Clone the chart container
+      const clonedChart = chartContainer.cloneNode(true);
+      clonedChart.style.width = "100%";
+      clonedChart.style.height = "100%";
+
+      tempContainer.appendChild(clonedChart);
+      document.body.appendChild(tempContainer);
+
+      // Use html2canvas to capture the chart
+      html2canvas(tempContainer, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        width: 1200,
+        height: 800,
+      })
+        .then((canvas) => {
+          const link = document.createElement("a");
+          link.href = canvas.toDataURL("image/png", 1.0);
+          link.download = `${getChartTitle(
+            chartId
+          )}_${new Date().getTime()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Clean up
+          document.body.removeChild(tempContainer);
+          resolve();
+        })
+        .catch((error) => {
+          document.body.removeChild(tempContainer);
+          reject(error);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+// ✅ FIXED: Download currently enlarged chart from modal
+function downloadEnlargedChart() {
+  const enlargedCanvas = document.getElementById("enlargedChart");
+  if (!enlargedCanvas) {
+    alert("Please open a chart in enlarged view first");
+    return;
+  }
+
+  const enlargedChart = Chart.getChart(enlargedCanvas);
+  if (!enlargedChart) {
+    alert("No chart found in enlarged view");
+    return;
+  }
+
+  try {
+    // Create a high-resolution canvas
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = enlargedCanvas.width * 2;
+    tempCanvas.height = enlargedCanvas.height * 2;
+
+    const tempCtx = tempCanvas.getContext("2d");
+
+    // Scale for high DPI and set white background
+    tempCtx.fillStyle = "#ffffff";
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    tempCtx.scale(2, 2);
+
+    // Draw the enlarged chart
+    tempCtx.drawImage(enlargedCanvas, 0, 0);
+
+    // Download
+    const link = document.createElement("a");
+    link.download = `chart_${new Date().getTime()}.png`;
+    link.href = tempCanvas.toDataURL("image/png", 1.0);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error downloading enlarged chart:", error);
+    alert("Error downloading chart. Please try again.");
+  }
+}
+
+// ✅ Add download button to modal
+function addDownloadButtonToModal() {
+  const modalFooter = document.querySelector("#chartModal .modal-footer");
+  if (modalFooter && !modalFooter.querySelector(".download-enlarged-btn")) {
+    const downloadBtn = document.createElement("button");
+    downloadBtn.className = "btn btn-success download-enlarged-btn";
+    downloadBtn.innerHTML =
+      '<i class="fas fa-download"></i> Download This Chart';
+    downloadBtn.onclick = downloadEnlargedChart;
+    modalFooter.appendChild(downloadBtn);
+  }
+}
+
+// Initialize modal download button when modal is shown
+document.addEventListener("DOMContentLoaded", function () {
+  const chartModal = document.getElementById("chartModal");
+  if (chartModal) {
+    chartModal.addEventListener("shown.bs.modal", function () {
+      addDownloadButtonToModal();
+    });
+  }
+});
+
+// Load script helper
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+function getChartTitle(chartId) {
+  const chartTitles = {
+    "chartEOR-container": "EOR Count by Male/Female",
+    "employeeGroupChart-container": "Employee Distribution by Group",
+    "ulEorChart-container": "Permanent technician vs Unique Learners",
+    "annualYtdChart-container": "TNI YTD (Year Till Date) Status",
+    "16HourChart-container": "16+ Learning hours compliance YTD Status",
+    "sheStackedChart-container":
+      "6+ Safety Learning hours compliance YTD Status",
+    "pl1Chart-container": "PL1 YTD Status",
+    "pl2Chart-container": "PL2 YTD Status",
+    "pl3Chart-container": "PL3 YTD Status",
+    "monthwiseYTDChart-container":
+      "TNI Month-wise YTD Plan vs Actual Coverage vs Adherence",
+    "sheCategoryChart-container": "Annual Safety Coverage Status",
+    "pmoCategoryChart-container": "Annual PMO Category Coverage Status",
+    "chartCESS-container": "Annual CESS Training Coverage Status",
+    "chartDigital-container": "Annual Digital Training Coverage Status",
+    "chartFS-container": "Annual Functional Skills Coverage Status",
+    "chartPS-container": "Annual Professional Skills Coverage Status",
+    "chartSHE-container": "Annual Safety Training Coverage Status",
+    "chartSust-container": "Annual Sustainability Coverage Status",
+  };
+  return chartTitles[chartId] || "Chart";
+}
