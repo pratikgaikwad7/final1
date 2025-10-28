@@ -1,492 +1,158 @@
-from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
-import pandas as pd
-from utils import get_db_connection
-from datetime import datetime
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tata Motors - Training Feedback System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #003366;">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="{{ url_for('static', filename='image.png') }}" alt="Tata Motors Logo" height="40">
+                Tata Motors - Training Feedback System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ciro.dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ciro.form') }}">Feedback Form</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-bp = Blueprint('cd_data_store', __name__, url_prefix='/cd_data_store')
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-# Flexible table configuration
-TABLE_CONFIGS = {
-    'induction': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'employee_category',
-            'plant_location', 'joined_year', 'date_from', 'date_to', 'shift',
-            'learning_hours', 'training_name', 'batch_number', 'training_venue_name',
-            'faculty_name', 'subject_name', 'remark'
-        ],
-        'required_columns': ['ticket_no', 'name'],
-        'display_name': 'Induction Data'
-    },
-    'fta': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'joining_year', 'date_of_joining',
-            'fta_batch_number', 'date_of_separation', 'trade', 'all_women_batch',
-            'second_year_inplant_shop', 'faculty_name', 'final_result', 'training_name'
-        ],
-        'required_columns': ['ticket_no', 'name', 'date_of_joining'],
-        'display_name': 'FTA Data'
-    },
-    'jta': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'joining_year', 'date_of_joining',
-            'jta_batch_number', 'date_of_separation', 'trade', 
-             'final_result', 'training_name'
-        ],
-        'required_columns': ['ticket_no', 'name'],
-        'display_name': 'JTA Data'
-    },
-    'kaushalya': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Kaushalya Data'
-    },
-    'pragati': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Pragati Data'
-    },
-    'lakshya': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Lakshya Data'
-    },
-    'live_trainer': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Live Trainer Data'
-    },
-    'fst': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'employee_category',
-            'plant_location', 'joined_year', 'date_from', 'date_to', 'shift',
-            'learning_hours', 'training_name', 'batch_number', 'training_venue_name',
-            'faculty_name', 'fst_cell_name', 'remark'
-        ],
-        'required_columns': ['ticket_no', 'name'],
-        'display_name': 'FST Data'
-    },
-    'master_data': {
-        'columns': [
-            'calendar_month', 'month_report_pmo_21_20', 'month_cd_key_26_25', 
-            'start_date', 'end_date', 'start_time', 'end_time', 'learning_hours', 
-            'training_name', 'pmo_training_category', 'pl_category', 
-            'brsr_sq_123_category', 'calendar_need_base_reschedule', 'tni_non_tni', 
-            'location_hall', 'faculty_1', 'faculty_2', 'faculty_3', 'faculty_4', 
-            'per_no', 'participants_name', 'bc_no', 'gender', 'employee_group', 
-            'department', 'factory', 'nomination_received_from', 'mobile_no', 
-            'email', 'cordi_name', 'submission_timestamp', 'program_id', 
-            'day_1_attendance', 'day_2_attendance', 'day_3_attendance', 'last_updated'
-        ],
-        'required_columns': ['training_name', 'participants_name'],
-        'display_name': 'Master Training Data'
-    },
-    'feedback_responses': {
-        'columns': [
-            'program_id', 'program_title', 'pmo_training_category', 'pl_category', 
-            'brsr_sq_123_category', 'tni_status', 'learning_hours', 'program_date', 
-            'per_no', 'participants_name', 'bc_no', 'gender', 'employee_group', 
-            'department', 'factory', 'phone', 'senior_name', 'sec1_q1', 'sec1_q2', 
-            'sec2_q1', 'sec2_q2', 'sec2_q3', 'sec3_q1', 'sec5_q1', 'sec5_q2', 
-            'sec6_q1', 'sec6_q2', 'sec7_q1', 'sec7_q2', 'sec7_q3_text', 'sec7_q4_text', 
-            'suggestions', 'clubbed_session_id', 'trainer1_name', 'trainer1_q1', 
-            'trainer1_q2', 'trainer1_q3', 'trainer1_q4', 'trainer2_name', 'trainer2_q1', 
-            'trainer2_q2', 'trainer2_q3', 'trainer2_q4', 'trainer3_name', 'trainer3_q1', 
-            'trainer3_q2', 'trainer3_q3', 'trainer3_q4', 'trainer4_name', 'trainer4_q1', 
-            'trainer4_q2', 'trainer4_q3', 'trainer4_q4'
-        ],
-        'required_columns': ['program_title', 'participants_name'],
-        'display_name': 'Feedback Responses',
-        'unique_key': None  # No unique key specified, will use insert only
-    }
-}
+        <div class="card shadow">
+            <div class="card-header" style="background-color: #003366; color: white;">
+                <h4 class="mb-0">Training Sessions Overview</h4>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="month" class="form-label">Month</label>
+                            <select id="month" name="month" class="form-select">
+                                <option value="">All</option>
+                                <option value="1" {% if selected_month == '1' %}selected{% endif %}>January</option>
+                                <option value="2" {% if selected_month == '2' %}selected{% endif %}>February</option>
+                                <option value="3" {% if selected_month == '3' %}selected{% endif %}>March</option>
+                                <option value="4" {% if selected_month == '4' %}selected{% endif %}>April</option>
+                                <option value="5" {% if selected_month == '5' %}selected{% endif %}>May</option>
+                                <option value="6" {% if selected_month == '6' %}selected{% endif %}>June</option>
+                                <option value="7" {% if selected_month == '7' %}selected{% endif %}>July</option>
+                                <option value="8" {% if selected_month == '8' %}selected{% endif %}>August</option>
+                                <option value="9" {% if selected_month == '9' %}selected{% endif %}>September</option>
+                                <option value="10" {% if selected_month == '10' %}selected{% endif %}>October</option>
+                                <option value="11" {% if selected_month == '11' %}selected{% endif %}>November</option>
+                                <option value="12" {% if selected_month == '12' %}selected{% endif %}>December</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="year" class="form-label">Year</label>
+                            <select id="year" name="year" class="form-select">
+                                <option value="">All</option>
+                                {% for year in years %}
+                                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="trainer" class="form-label">Trainer</label>
+                            <select id="trainer" name="trainer" class="form-select">
+                                <option value="">All</option>
+                                {% for trainer in trainers %}
+                                    <option value="{{ trainer }}" {% if selected_trainer == trainer %}selected{% endif %}>{{ trainer }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="program" class="form-label">Training Program</label>
+                            <select id="program" name="search" class="form-select">
+                                <option value="">All</option>
+                                {% for program in programs %}
+                                    <option value="{{ program }}" {% if search_query == program %}selected{% endif %}>{{ program }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12 text-end">
+                            <button type="submit" class="btn btn-primary me-2">Apply Filter</button>
+                            <a href="{{ url_for('ciro.dashboard') }}" class="btn btn-outline-secondary">Reset</a>
+                            <a href="{{ url_for('ciro.export_summary', month=selected_month, year=selected_year, trainer=selected_trainer, search=search_query) }}" 
+                               class="btn btn-success ms-2">Export Excel</a>
+                        </div>
+                    </div>
+                </form>
 
-# Excel headers mapping to DB columns
-COLUMN_MAPPING = {
-    # Common mappings
-    'sr no': 'sr_no',
-    'sr_no': 'sr_no',
-    'ticket no': 'ticket_no',
-    'academic year': 'joining_year',
-    'ticket number': 'ticket_no',
-    'ticket_no': 'ticket_no',
-    'name': 'name',
-    'gender': 'gender',
-    'employee category': 'employee_category',
-    'plant location': 'plant_location',
-    'year': 'year',
-    'date(from)': 'date_from',
-    'date(to)': 'date_to',
-    'shift': 'shift',
-    'learning hours': 'learning_hours',
-    'training name': 'training_name',
-    'batch number': 'batch_number',
-    'training venue name': 'training_venue_name',
-    'faculty name': 'faculty_name',
-    'subject name': 'subject_name',
-    'remark': 'remark',
-    # FST specific mapping
-    'fst cell name': 'fst_cell_name',
-    # Master data mappings
-    'calender month': 'calendar_month',
-    'month report pmo 21-20': 'month_report_pmo_21_20',
-    'month cd/key 26-25': 'month_cd_key_26_25',
-    'start date': 'start_date',
-    'end date': 'end_date',
-    'start time': 'start_time',
-    'end time': 'end_time',
-    'pmo training category': 'pmo_training_category',
-    'pl category': 'pl_category',
-    'brsr sq 1,2,3 category': 'brsr_sq_123_category',
-    'calendar/need base/reschedule': 'calendar_need_base_reschedule',
-    'tni / non tni': 'tni_non_tni',
-    'location hall': 'location_hall',
-    'faculty 1': 'faculty_1',
-    'faculty 2': 'faculty_2',
-    'faculty 3': 'faculty_3',
-    'faculty 4': 'faculty_4',
-    'per. no': 'per_no',
-    'participants name': 'participants_name',
-    'bc no': 'bc_no',
-    'employee group': 'employee_group',
-    'department': 'department',
-    'factory': 'factory',
-    'nomination recieved from': 'nomination_received_from',
-    # FTA specific mappings
-    'joining year': 'joining_year',
-    'joining_year': 'joining_year',
-    'date of joining': 'date_of_joining',
-    'date_of_joining': 'date_of_joining',
-    'fta batch number': 'fta_batch_number',
-    'fta_batch_number': 'fta_batch_number',
-    'date of separation': 'date_of_separation',
-    'date_of_separation': 'date_of_separation',
-    'trade': 'trade',
-    'all women batch': 'all_women_batch',
-    'all_women_batch': 'all_women_batch',
-    'second year inplant shop': 'second_year_inplant_shop',
-    'second_year_inplant_shop': 'second_year_inplant_shop',
-    'final result': 'final_result',
-    'final_result': 'final_result',
-    # JTA specific mappings
-    'jta batch number': 'jta_batch_number',
-    'jta_batch_number': 'jta_batch_number',
-    # Feedback Responses mappings
-    'training name': 'program_title',
-    'pmo training category': 'pmo_training_category',
-    'pl category': 'pl_category',
-    'brsr sq 1,2,3 category': 'brsr_sq_123_category',
-    'tni / non tni': 'tni_status',
-    'start date': 'program_date',
-    'pers no': 'per_no',
-    'bc no': 'bc_no',
-    'phone': 'phone',
-    'senior name': 'senior_name',
-    '1.1': 'sec1_q1',
-    '1.2': 'sec1_q2',
-    '2.1': 'sec2_q1',
-    '2.2': 'sec2_q2',
-    '2.3': 'sec2_q3',
-    '3': 'sec3_q1',
-    '5.1': 'sec5_q1',
-    '5.2': 'sec5_q2',
-    '6.1': 'sec6_q1',
-    '6.2': 'sec6_q2',
-    '7.1': 'sec7_q1',
-    '7.2': 'sec7_q2',
-    '7.3': 'sec7_q3_text',
-    '7.4': 'sec7_q4_text',
-    '7.5': 'suggestions',
-    'trainer name 1': 'trainer1_name',
-    '4.1a': 'trainer1_q1',
-    '4.1b': 'trainer1_q2',
-    '4.1c': 'trainer1_q3',
-    '4.1d': 'trainer1_q4',
-    'trainer name 2': 'trainer2_name',
-    '4.2a': 'trainer2_q1',
-    '4.2b': 'trainer2_q2',
-    '4.2c': 'trainer2_q3',
-    '4.2d': 'trainer2_q4',
-    'trainer name 3': 'trainer3_name',
-    '4.3a': 'trainer3_q1',
-    '4.3b': 'trainer3_q2',
-    '4.3c': 'trainer3_q3',
-    '4.3d': 'trainer3_q4',
-    'trainer name 4': 'trainer4_name',
-    '4.4a': 'trainer4_q1',
-    '4.4b': 'trainer4_q2',
-    '4.4c': 'trainer4_q3',
-    '4.4d': 'trainer4_q4'
-}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Program</th>
+                                <th>Date</th>
+                                <th>Trainers</th>
+                                <th>Responses</th>
+                                <th>CSI</th>
+                                <th>TFI</th>
+                                <th>Avg Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in sessions %}
+                            <tr>
+                                <td>{{ session.program_title or 'N/A' }}</td>
+                                <td>{{ session.program_date.strftime('%Y-%m-%d') if session.program_date else 'N/A' }}</td>
+                                <td>{{ session.trainer_names or 'N/A' }}</td>
+                                <td>{{ session.response_count or 0 }}</td>
+                                <td class="{% if session.csi and session.csi >= 3.5 %}text-success{% elif session.csi and session.csi >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ "%.2f"|format(session.csi) if session.csi is not none else 'N/A' }}
+                                </td>
+                                <td class="{% if session.tfi and session.tfi >= 3.5 %}text-success{% elif session.tfi and session.tfi >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ "%.2f"|format(session.tfi) if session.tfi is not none else 'N/A' }}
+                                </td>
+                                <td class="{% if session.avg_score and session.avg_score >= 3.5 %}text-success{% elif session.avg_score and session.avg_score >= 2.5 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ "%.2f"|format(session.avg_score) if session.avg_score is not none else 'N/A' }}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('ciro.training_detail', program_title=session.program_title, program_date=session.program_date.strftime('%Y-%m-%d') if session.program_date else 'N/A') }}" 
+                                       class="btn btn-sm btn-outline-info me-1">View</a>
+                                    <a href="{{ url_for('ciro.export_detail', program_title=session.program_title, program_date=session.program_date.strftime('%Y-%m-%d') if session.program_date else 'N/A') }}" 
+                                       class="btn btn-sm btn-outline-primary">Export</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center">No training sessions found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>   
+            </div>
+        </div>
+    </div>
 
-def validate_file(file):
-    if not file or file.filename == '':
-        return False, 'No file selected'
-    if not file.filename.endswith(('.xlsx', '.xls')):
-        return False, 'Only Excel files are allowed'
-    return True, 'File validated'
-
-def clean_value(value):
-    if pd.isna(value):
-        return None
-    if isinstance(value, (int, float)):
-        return str(value)
-    return str(value).strip()
-
-def parse_date(date_val):
-    if pd.isna(date_val):
-        return None
-    try:
-        # If it's already a datetime object, extract the date
-        if isinstance(date_val, (datetime, pd.Timestamp)):
-            return date_val.date()
-        
-        # Convert to string and strip
-        date_str = str(date_val).strip()
-        
-        # Try common date formats
-        formats = [
-            '%Y-%m-%d',      # 2025-10-28
-            '%d/%m/%Y',      # 28/10/2025
-            '%m/%d/%Y',      # 10/28/2025
-            '%d-%m-%Y',      # 28-10-2025
-            '%m-%d-%Y',      # 10-28-2025
-            '%d/%m/%y',      # 28/10/25
-            '%m/%d/%y',      # 10/28/25
-            '%d-%m-%y',      # 28-10-25
-            '%m-%d-%y',      # 10-28-25
-        ]
-        
-        for fmt in formats:
-            try:
-                return datetime.strptime(date_str, fmt).date()
-            except ValueError:
-                continue
-                
-        # If none of the formats work, try pandas
-        parsed_date = pd.to_datetime(date_str, errors='coerce')
-        if not pd.isna(parsed_date):
-            return parsed_date.date()
-            
-        # Debug: Print if parsing failed
-        print(f"Failed to parse date: {date_str}")
-        return None
-    except Exception as e:
-        # Debug: Print the exception
-        print(f"Error parsing date '{date_val}': {str(e)}")
-        return None
-
-def parse_time(time_val):
-    if pd.isna(time_val):
-        return None
-    try:
-        # Try to parse as time
-        return pd.to_datetime(time_val, errors='coerce').time()
-    except:
-        return None
-
-def process_data(df, table_config):
-    processed = []
-    errors = []
-
-    # Normalize Excel column names
-    df.columns = [str(col).strip().lower() for col in df.columns]
-    
-    # Create a normalized mapping with lowercase keys
-    normalized_mapping = {k.lower().strip(): v for k, v in COLUMN_MAPPING.items()}
-    
-    # Debug: Print column names and mapping
-    print(f"Excel columns after normalization: {df.columns.tolist()}")
-    print(f"Normalized mapping keys: {list(normalized_mapping.keys())}")
-
-    for idx, row in df.iterrows():
-        try:
-            # Initialize data_row with None for all columns
-            data_row = {col: None for col in table_config['columns']}
-            
-            # Map Excel columns to database columns
-            for excel_col in df.columns:
-                # Use normalized_mapping to find the database column
-                if excel_col in normalized_mapping:
-                    db_col = normalized_mapping[excel_col]
-                    if db_col in table_config['columns']:
-                        value = row[excel_col]
-                        if db_col == 'program_date':
-                            # Special handling for program_date
-                            data_row[db_col] = parse_date(value)
-                            # Debug: Print the date parsing result
-                            print(f"Row {idx+2}: Parsing program_date: {value} -> {data_row[db_col]}")
-                        elif 'date' in db_col:
-                            data_row[db_col] = parse_date(value)
-                        elif 'time' in db_col:
-                            data_row[db_col] = parse_time(value)
-                        else:
-                            data_row[db_col] = clean_value(value)
-                else:
-                    # If column is not in mapping but matches a column in the table config, use it directly
-                    if excel_col in [col.lower() for col in table_config['columns']]:
-                        # Find the original column name (case-sensitive)
-                        original_col = next((col for col in table_config['columns'] if col.lower() == excel_col), None)
-                        if original_col:
-                            value = row[excel_col]
-                            if original_col == 'program_date':
-                                # Special handling for program_date
-                                data_row[original_col] = parse_date(value)
-                                # Debug: Print the date parsing result
-                                print(f"Row {idx+2}: Parsing program_date (direct): {value} -> {data_row[original_col]}")
-                            elif 'date' in original_col:
-                                data_row[original_col] = parse_date(value)
-                            elif 'time' in original_col:
-                                data_row[original_col] = parse_time(value)
-                            else:
-                                data_row[original_col] = clean_value(value)
-
-            # Check required fields
-            missing_req = [req for req in table_config['required_columns'] if not data_row.get(req)]
-            if missing_req:
-                errors.append(f"Row {idx+2}: Missing {', '.join(missing_req)}")
-                continue
-
-            processed.append(data_row)
-        except Exception as e:
-            errors.append(f"Row {idx+2}: Error - {str(e)}")
-    return processed, errors
-
-# Updated insert_data with support for tables without unique keys
-def insert_data(table_name, data):
-    """
-    Inserts new records or updates existing ones based on unique key if specified.
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        table_config = TABLE_CONFIGS[table_name]
-        columns = table_config['columns']
-        insert_columns = [col for col in columns if col != 'sr_no']  # skip auto-increment
-        placeholders = ', '.join(['%s'] * len(insert_columns))
-        columns_str = ', '.join(insert_columns)
-
-        # Check if table has a unique key
-        unique_key = table_config.get('unique_key')
-        if unique_key:
-            # Update only relevant columns (exclude sr_no and unique key)
-            update_cols = [col for col in insert_columns if col != unique_key]
-            update_str = ', '.join([f"{col} = VALUES({col})" for col in update_cols])
-            
-            sql = f"""
-            INSERT INTO {table_name} ({columns_str})
-            VALUES ({placeholders})
-            ON DUPLICATE KEY UPDATE {update_str}
-            """
-        else:
-            # No unique key, insert only
-            sql = f"""
-            INSERT INTO {table_name} ({columns_str})
-            VALUES ({placeholders})
-            """
-
-        values_list = [[row.get(col) for col in insert_columns] for row in data]
-        cursor.executemany(sql, values_list)
-        conn.commit()
-        return True, f"Processed {len(data)} records into {table_name}"
-    except Exception as e:
-        conn.rollback()
-        return False, f"Database error: {str(e)}"
-    finally:
-        cursor.close()
-        conn.close()
-
-@bp.route('/upload_page')
-def upload_page():
-    return render_template('admin_upload_files.html', table_configs=TABLE_CONFIGS)
-
-@bp.route('/upload', methods=['POST'])
-def upload_data():
-    try:
-        table_name = request.form.get('table_name')
-        if not table_name or table_name not in TABLE_CONFIGS:
-            flash('Invalid table selected', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        if 'file' not in request.files:
-            flash('No file provided', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        file = request.files['file']
-        is_valid, msg = validate_file(file)
-        if not is_valid:
-            flash(msg, 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        try:
-            df = pd.read_excel(file)
-            # Debug: Print first few rows
-            print(f"First 5 rows of Excel data:\n{df.head()}")
-        except Exception as e:
-            flash(f'Error reading Excel: {str(e)}', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        processed_data, errors = process_data(df, TABLE_CONFIGS[table_name])
-        if errors:
-            flash(f'Found {len(errors)} errors in data. First error: {errors[0]}', 'warning')
-            return redirect(url_for('cd_data_store.upload_page'))
-        if not processed_data:
-            flash('No valid data to process', 'warning')
-            return redirect(url_for('cd_data_store.upload_page'))
-
-        success, msg = insert_data(table_name, processed_data)
-        flash(msg, 'success' if success else 'danger')
-        return redirect(url_for('cd_data_store.upload_page'))
-    except Exception as e:
-        flash(f'Unexpected error: {str(e)}', 'danger')
-        return redirect(url_for('cd_data_store.upload_page'))
-
-@bp.route('/api/upload/<table_name>', methods=['POST'])
-def api_upload_data(table_name):
-    try:
-        if table_name not in TABLE_CONFIGS:
-            return jsonify({'success': False, 'message': 'Invalid table name'}), 400
-        if 'file' not in request.files:
-            return jsonify({'success': False, 'message': 'No file provided'}), 400
-        file = request.files['file']
-        is_valid, msg = validate_file(file)
-        if not is_valid:
-            return jsonify({'success': False, 'message': msg}), 400
-        try:
-            df = pd.read_excel(file)
-        except Exception as e:
-            return jsonify({'success': False, 'message': f'Error reading Excel: {str(e)}'}), 400
-
-        processed_data, errors = process_data(df, TABLE_CONFIGS[table_name])
-        if errors:
-            return jsonify({
-                'success': False,
-                'message': 'Data validation errors',
-                'errors': errors[:5],
-                'valid_records': len(processed_data)
-            }), 400
-        if not processed_data:
-            return jsonify({'success': False, 'message': 'No valid data to process'}), 400
-
-        success, msg = insert_data(table_name, processed_data)
-        if success:
-            return jsonify({
-                'success': True,
-                'message': msg,
-                'records_processed': len(processed_data)
-            }), 200
-        else:
-            return jsonify({'success': False, 'message': msg}), 500
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'Unexpected error: {str(e)}'}), 500
-
-@bp.route('/api/tables', methods=['GET'])
-def api_get_tables():
-    tables_info = {
-        name: {
-            'display_name': config['display_name'],
-            'columns': config['columns'],
-            'required_columns': config['required_columns']
-        }
-        for name, config in TABLE_CONFIGS.items()
-    }
-    return jsonify({'success': True, 'tables': tables_info}), 200
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
