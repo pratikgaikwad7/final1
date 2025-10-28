@@ -236,8 +236,12 @@ def parse_date(date_val):
     if pd.isna(date_val):
         return None
     try:
-        # Try to parse as date with multiple formats
-        date_val = str(date_val).strip()
+        # If it's already a datetime object, extract the date
+        if isinstance(date_val, (datetime, pd.Timestamp)):
+            return date_val.date()
+        
+        # Convert to string and strip
+        date_str = str(date_val).strip()
         
         # Try common date formats
         formats = [
@@ -254,13 +258,21 @@ def parse_date(date_val):
         
         for fmt in formats:
             try:
-                return datetime.strptime(date_val, fmt).date()
+                return datetime.strptime(date_str, fmt).date()
             except ValueError:
                 continue
                 
         # If none of the formats work, try pandas
-        return pd.to_datetime(date_val, errors='coerce').date()
-    except:
+        parsed_date = pd.to_datetime(date_str, errors='coerce')
+        if not pd.isna(parsed_date):
+            return parsed_date.date()
+            
+        # Debug: Print if parsing failed
+        print(f"Failed to parse date: {date_str}")
+        return None
+    except Exception as e:
+        # Debug: Print the exception
+        print(f"Error parsing date '{date_val}': {str(e)}")
         return None
 
 def parse_time(time_val):
@@ -279,8 +291,12 @@ def process_data(df, table_config):
     # Normalize Excel column names
     df.columns = [str(col).strip().lower() for col in df.columns]
     
-    # Debug: Print column names
+    # Create a normalized mapping with lowercase keys
+    normalized_mapping = {k.lower().strip(): v for k, v in COLUMN_MAPPING.items()}
+    
+    # Debug: Print column names and mapping
     print(f"Excel columns after normalization: {df.columns.tolist()}")
+    print(f"Normalized mapping keys: {list(normalized_mapping.keys())}")
 
     for idx, row in df.iterrows():
         try:
@@ -289,13 +305,16 @@ def process_data(df, table_config):
             
             # Map Excel columns to database columns
             for excel_col in df.columns:
-                if excel_col in COLUMN_MAPPING:
-                    db_col = COLUMN_MAPPING[excel_col]
+                # Use normalized_mapping to find the database column
+                if excel_col in normalized_mapping:
+                    db_col = normalized_mapping[excel_col]
                     if db_col in table_config['columns']:
                         value = row[excel_col]
                         if db_col == 'program_date':
                             # Special handling for program_date
                             data_row[db_col] = parse_date(value)
+                            # Debug: Print the date parsing result
+                            print(f"Row {idx+2}: Parsing program_date: {value} -> {data_row[db_col]}")
                         elif 'date' in db_col:
                             data_row[db_col] = parse_date(value)
                         elif 'time' in db_col:
@@ -304,17 +323,22 @@ def process_data(df, table_config):
                             data_row[db_col] = clean_value(value)
                 else:
                     # If column is not in mapping but matches a column in the table config, use it directly
-                    if excel_col in table_config['columns']:
-                        value = row[excel_col]
-                        if excel_col == 'program_date':
-                            # Special handling for program_date
-                            data_row[excel_col] = parse_date(value)
-                        elif 'date' in excel_col:
-                            data_row[excel_col] = parse_date(value)
-                        elif 'time' in excel_col:
-                            data_row[excel_col] = parse_time(value)
-                        else:
-                            data_row[excel_col] = clean_value(value)
+                    if excel_col in [col.lower() for col in table_config['columns']]:
+                        # Find the original column name (case-sensitive)
+                        original_col = next((col for col in table_config['columns'] if col.lower() == excel_col), None)
+                        if original_col:
+                            value = row[excel_col]
+                            if original_col == 'program_date':
+                                # Special handling for program_date
+                                data_row[original_col] = parse_date(value)
+                                # Debug: Print the date parsing result
+                                print(f"Row {idx+2}: Parsing program_date (direct): {value} -> {data_row[original_col]}")
+                            elif 'date' in original_col:
+                                data_row[original_col] = parse_date(value)
+                            elif 'time' in original_col:
+                                data_row[original_col] = parse_time(value)
+                            else:
+                                data_row[original_col] = clean_value(value)
 
             # Check required fields
             missing_req = [req for req in table_config['required_columns'] if not data_row.get(req)]
