@@ -1,514 +1,2083 @@
-from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
-import pandas as pd
-from utils import get_db_connection
-from datetime import datetime
-
-bp = Blueprint('cd_data_store', __name__, url_prefix='/cd_data_store')
-
-# Flexible table configuration
-TABLE_CONFIGS = {
-    'induction': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'employee_category',
-            'plant_location', 'joined_year', 'date_from', 'date_to', 'shift',
-            'learning_hours', 'training_name', 'batch_number', 'training_venue_name',
-            'faculty_name', 'subject_name', 'remark'
-        ],
-        'required_columns': ['ticket_no', 'name'],
-        'display_name': 'Induction Data'
-    },
-    'fta': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'joining_year', 'date_of_joining',
-            'fta_batch_number', 'date_of_separation', 'trade', 'all_women_batch',
-            'second_year_inplant_shop', 'faculty_name', 'final_result', 'training_name'
-        ],
-        'required_columns': ['ticket_no', 'name', 'date_of_joining'],
-        'display_name': 'FTA Data'
-    },
-    'jta': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'joining_year', 'date_of_joining',
-            'jta_batch_number', 'date_of_separation', 'trade', 
-             'final_result', 'training_name'
-        ],
-        'required_columns': ['ticket_no', 'name'],
-        'display_name': 'JTA Data'
-    },
-    'kaushalya': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Kaushalya Data'
-    },
-    'pragati': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'employee_category', 'factory',
-            'course_joining_year', 'date_of_joining', 'pragati_batch_number', 'diploma_name',
-            'first_year_result', 'second_year_result', 'final_result', 'training_name', 'remark'
-        ],
-        'required_columns': ['ticket_no', 'name', 'date_of_joining'],
-        'display_name': 'Pragati Data'
-    },
-    'lakshya': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Lakshya Data'
-    },
-    'live_trainer': {
-        'columns': ['name', 'gender', 'ticket_no', 'doj'],
-        'required_columns': ['name', 'ticket_no'],
-        'display_name': 'Live Trainer Data'
-    },
-    'fst': {
-        'columns': [
-            'sr_no', 'ticket_no', 'name', 'gender', 'employee_category',
-            'plant_location', 'joined_year', 'date_from', 'date_to', 'shift',
-            'learning_hours', 'training_name', 'batch_number', 'training_venue_name',
-            'faculty_name', 'fst_cell_name', 'remark'
-        ],
-        'required_columns': ['ticket_no', 'name'],
-        'display_name': 'FST Data'
-    },
-    'master_data': {
-        'columns': [
-            'calendar_month', 'month_report_pmo_21_20', 'month_cd_key_26_25', 
-            'start_date', 'end_date', 'start_time', 'end_time', 'learning_hours', 
-            'training_name', 'pmo_training_category', 'pl_category', 
-            'brsr_sq_123_category', 'calendar_need_base_reschedule', 'tni_non_tni', 
-            'location_hall', 'faculty_1', 'faculty_2', 'faculty_3', 'faculty_4', 
-            'per_no', 'participants_name', 'bc_no', 'gender', 'employee_group', 
-            'department', 'factory', 'nomination_received_from', 'mobile_no', 
-            'email', 'cordi_name', 'submission_timestamp', 'program_id', 
-            'day_1_attendance', 'day_2_attendance', 'day_3_attendance', 'last_updated'
-        ],
-        'required_columns': ['training_name', 'participants_name'],
-        'display_name': 'Master Training Data'
-    },
-    'feedback_responses': {
-        'columns': [
-            'program_id', 'program_title', 'pmo_training_category', 'pl_category', 
-            'brsr_sq_123_category', 'tni_status', 'learning_hours', 'program_date', 
-            'per_no', 'participants_name', 'bc_no', 'gender', 'employee_group', 
-            'department', 'factory', 'phone', 'senior_name', 'sec1_q1', 'sec1_q2', 
-            'sec2_q1', 'sec2_q2', 'sec2_q3', 'sec3_q1', 'sec5_q1', 'sec5_q2', 
-            'sec6_q1', 'sec6_q2', 'sec7_q1', 'sec7_q2', 'sec7_q3_text', 'sec7_q4_text', 
-            'suggestions', 'clubbed_session_id', 'trainer1_name', 'trainer1_q1', 
-            'trainer1_q2', 'trainer1_q3', 'trainer1_q4', 'trainer2_name', 'trainer2_q1', 
-            'trainer2_q2', 'trainer2_q3', 'trainer2_q4', 'trainer3_name', 'trainer3_q1', 
-            'trainer3_q2', 'trainer3_q3', 'trainer3_q4', 'trainer4_name', 'trainer4_q1', 
-            'trainer4_q2', 'trainer4_q3', 'trainer4_q4'
-        ],
-        'required_columns': ['program_title', 'participants_name'],
-        'display_name': 'Feedback Responses',
-        'unique_key': None  # No unique key specified, will use insert only
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pragati Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #003366;
+      --secondary-color: #0077b6;
+      --accent-color: #f72585;
+      --light-gray: #f8f9fa;
+      --dark-gray: #212529;
+      --success-color: #4cc9f0;
+      --danger-color: #ef233c;
+      --warning-color: #f8961e;
+      --info-color: #4895ef;
+      --card-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      --card-hover-shadow: 0 6px 16px rgba(0, 55, 102, 0.1);
+      --filter-col-min-width: 180px;
+      --filter-gap: 18px;
+      --row-gap: 20px;
+      --border-radius: 10px;
+      --panel-width: 350px;
+      --toggle-size: 40px;
+      --control-area-height: 70px;
+      --strip-margin-bottom: 10px;
+      --card-bg: rgba(255,255,255,0.95);
+      --light-text: #ffffff;
+      --dark-text: #0f172a;
+      --navbar-width: 70px;
+      --pink-color: #f72585; /* Added pink color variable */
+      --male-color: #4361ee; /* Added male color variable */
+      --female-color: #f72585; /* Added female color variable */
+      --pass-color: #28a745; /* Added pass color variable */
+      --fail-color: #dc3545; /* Added fail color variable */
+      --tab-bg: #f1f5f9;
+      --tab-active-bg: #ffffff;
+      --tab-border: #dee2e6;
+      --tab-active-border: var(--primary-color);
     }
+
+    *, *:after, *:before {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: auto;
+      margin: 0;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      font-size: 14px;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      background: linear-gradient(135deg, #08203e 0%, #557c93 100%);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      display: none;
+    }
+
+    body {
+      padding-top: 0;
+    }
+
+    .dashboard-container {
+      width: 100%;
+      max-width: 1800px;
+      margin-top: 250px;
+      padding: 20px;
+      padding-left: calc(20px + var(--navbar-width));
+      transition: all 0.3s ease;
+    }
+
+    .heading-icon {
+      width: 18px;
+      height: 18px;
+      fill: var(--secondary-color);
+      flex-shrink: 0;
+    }
+    
+    .filter-control-area {
+      position: fixed;
+      top: 105px;
+      height: var(--control-area-height);
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-left: 3px solid #4361ee;
+      border-bottom: 2px solid #4361ee;
+      border-right: 2px solid #4361ee;
+      display: flex;
+      align-items: center;
+      padding: 0 15px;
+      z-index: 9999;
+      transition: all 0.3s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .filter-control-area.fixed {
+      position: fixed;
+      top: 0;
+      left: 15px;
+      right: 15px;
+      margin: 0;
+    }
+    
+    .filter-control-area.panel-open {
+      left: calc(15px + var(--panel-width));
+    }
+
+    .filter-toggle-btn {
+      width: var(--toggle-size);
+      height: var(--toggle-size);
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--card-shadow);
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      z-index: 1001;
+      position: relative;
+    }
+    
+    .filter-toggle-btn:hover {
+      background-color: var(--secondary-color);
+      transform: scale(1.05);
+    }
+    
+    .filter-toggle-btn i {
+      font-size: 16px;
+    }
+    
+    .filter-label-container {
+      background-color: rgb(67, 161, 255);
+      border-radius: 20px;
+      padding: 5px 12px;
+      margin: 0 15px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      gap: 8px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    
+    .filter-label-container:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .filter-label-text {
+      font-weight: 600;
+      color: white;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      user-select: none;
+      cursor: pointer;
+    }
+    
+    .applied-filters-strip {
+      flex: 1;
+      overflow: hidden;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      border: none;
+      box-shadow: none;
+      position: relative;
+      left: 0;
+      width: auto;
+      top: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .applied-filters-container {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .applied-filters-title {
+      font-weight: 600;
+      color: #000000;
+      margin-right: 6px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    
+    .applied-filters-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      overflow: hidden;
+    }
+    
+    .applied-filter-item {
+      background-color: rgb(255, 255, 255);
+      border-radius: 12px;
+      border: 1px solid #36363628;
+      padding: 2px 6px;
+      font-size: 0.9rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      transition: transform 0.1s ease;
+    }
+    
+    .applied-filter-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08);
+    }
+    
+    .filter-key {
+      font-weight: 600;
+      color: #3a0ca3;
+      margin-right: 3px;
+    }
+    
+    .filter-value {
+      color: #4a5568;
+      font-weight: 500;
+    }
+    
+    .updated-date-container {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    
+    .date-display {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 2px 6px;
+      font-size: 0.8rem;
+      border: 1px solid #36363628;
+      color: #4a5568;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      display: inline-flex;
+      align-items: center;
+      transition: transform 0.1s ease;
+    }
+    
+    .date-display:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-side-panel {
+      position: fixed;
+      top: 0;
+      left: calc(-1 * var(--panel-width));
+      width: var(--panel-width);
+      height: 100vh;
+      background-color: white;
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
+      transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .filter-side-panel.active {
+      left: 0;
+    }
+    
+    .filter-panel-header {
+      padding: 15px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .filter-panel-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    .filter-panel-actions {
+      padding: 15px;
+      background-color: var(--light-gray);
+      border-bottom: 1px solid #e9ecef;
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .filter-panel-actions .btn {
+      flex: 1;
+      margin-bottom: 0;
+      transition: all 0.2s ease;
+    }
+    
+    .filter-panel-actions .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .filter-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      transition: all 0.3s ease;
+    }
+    
+    .filter-group {
+      margin-bottom: 20px;
+    }
+    
+    .filter-group .filter-col {
+      margin-bottom: 15px;
+    }
+    
+    .filter-section {
+      background: #ffffff;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      padding: 20px;
+      margin-bottom: 15px;
+      transition: all 0.25s ease;
+    }
+    
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(var(--filter-col-min-width), 1fr));
+      gap: var(--filter-gap);
+      margin-bottom: var(--row-gap);
+      align-items: flex-end;
+    }
+    
+    .filter-col {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    
+    .filter-label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--primary-color);
+      font-size: 0.85rem;
+    }
+    
+    input.form-control,
+    select.form-select {
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background-color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: normal;
+      padding: 0 12px;
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+    
+    input.form-control:focus,
+    select.form-select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.15rem rgba(0,55,102,0.15);
+    }
+    
+    .input-with-icon {
+      position: relative;
+    }
+    
+    .input-with-icon .search-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 0.8rem;
+    }
+    
+    .range-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    
+    .actions-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    
+    .actions-row .half-width {
+      flex: 1 1 48%;
+    }
+    
+    .btn {
+      height: 38px;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      padding: 0 14px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+      min-height: 120px;
+    }
+
+    .loading-spinner {
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-left-color: var(--primary-color);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+    }
+    
+    /* ===========================
+       Stats Grid - Updated with Metrics Styling
+    =========================== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 22px;
+      margin-bottom: 32px;
+      transition: all 0.3s ease;
+    }
+
+   .stat-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: var(--card-shadow);
+  height: 160px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-top: 5px solid #00f2ffff;
 }
 
-# Excel headers mapping to DB columns
-COLUMN_MAPPING = {
-    # Common mappings
-    'sr no': 'sr_no',
-    'sr_no': 'sr_no',
-    'ticket no': 'ticket_no',
-    'academic year': 'joining_year',
-    'ticket number': 'ticket_no',
-    'ticket_no': 'ticket_no',
-    'name': 'name',
-    'gender': 'gender',
-    'employee category': 'employee_category',
-    'plant location': 'plant_location',
-    'year': 'year',
-    'date(from)': 'date_from',
-    'date(to)': 'date_to',
-    'shift': 'shift',
-    'learning hours': 'learning_hours',
-    'training name': 'training_name',
-    'batch number': 'batch_number',
-    'training venue name': 'training_venue_name',
-    'faculty name': 'faculty_name',
-    'subject name': 'subject_name',
-    'remark': 'remark',
-    # Pragati specific mappings
-    'course joining year': 'course_joining_year',
-    'pragati batch no.': 'pragati_batch_number',
-    'diploma name': 'diploma_name',
-    '1st year result': 'first_year_result',
-    '2nd year result': 'second_year_result',
-    # FST specific mapping
-    'fst cell name': 'fst_cell_name',
-    # Master data mappings
-    'calender month': 'calendar_month',
-    'month report pmo 21-20': 'month_report_pmo_21_20',
-    'month cd/key 26-25': 'month_cd_key_26_25',
-    'start date': 'start_date',
-    'end date': 'end_date',
-    'start time': 'start_time',
-    'end time': 'end_time',
-    'pmo training category': 'pmo_training_category',
-    'pl category': 'pl_category',
-    'brsr sq 1,2,3 category': 'brsr_sq_123_category',
-    'calendar/need base/reschedule': 'calendar_need_base_reschedule',
-    'tni / non tni': 'tni_non_tni',
-    'location hall': 'location_hall',
-    'faculty 1': 'faculty_1',
-    'faculty 2': 'faculty_2',
-    'faculty 3': 'faculty_3',
-    'faculty 4': 'faculty_4',
-    'per. no': 'per_no',
-    'participants name': 'participants_name',
-    'bc no': 'bc_no',
-    'employee group': 'employee_group',
-    'department': 'department',
-    'factory': 'factory',
-    'nomination recieved from': 'nomination_received_from',
-    # FTA specific mappings
-    'joining year': 'joining_year',
-    'joining_year': 'joining_year',
-    'date of joining': 'date_of_joining',
-    'date_of_joining': 'date_of_joining',
-    'fta batch number': 'fta_batch_number',
-    'fta_batch_number': 'fta_batch_number',
-    'date of separation': 'date_of_separation',
-    'date_of_separation': 'date_of_separation',
-    'trade': 'trade',
-    'all women batch': 'all_women_batch',
-    'all_women_batch': 'all_women_batch',
-    'second year inplant shop': 'second_year_inplant_shop',
-    'second_year_inplant_shop': 'second_year_inplant_shop',
-    'final result': 'final_result',
-    'final_result': 'final_result',
-    # JTA specific mappings
-    'jta batch number': 'jta_batch_number',
-    'jta_batch_number': 'jta_batch_number',
-    # Feedback Responses mappings
-    'training name': 'program_title',
-    'pmo training category': 'pmo_training_category',
-    'pl category': 'pl_category',
-    'brsr sq 1,2,3 category': 'brsr_sq_123_category',
-    'tni / non tni': 'tni_status',
-    'start date': 'program_date',
-    'pers no': 'per_no',
-    'bc no': 'bc_no',
-    'phone': 'phone',
-    'senior name': 'senior_name',
-    '1.1': 'sec1_q1',
-    '1.2': 'sec1_q2',
-    '2.1': 'sec2_q1',
-    '2.2': 'sec2_q2',
-    '2.3': 'sec2_q3',
-    '3': 'sec3_q1',
-    '5.1': 'sec5_q1',
-    '5.2': 'sec5_q2',
-    '6.1': 'sec6_q1',
-    '6.2': 'sec6_q2',
-    '7.1': 'sec7_q1',
-    '7.2': 'sec7_q2',
-    '7.3': 'sec7_q3_text',
-    '7.4': 'sec7_q4_text',
-    '7.5': 'suggestions',
-    'trainer name 1': 'trainer1_name',
-    '4.1a': 'trainer1_q1',
-    '4.1b': 'trainer1_q2',
-    '4.1c': 'trainer1_q3',
-    '4.1d': 'trainer1_q4',
-    'trainer name 2': 'trainer2_name',
-    '4.2a': 'trainer2_q1',
-    '4.2b': 'trainer2_q2',
-    '4.2c': 'trainer2_q3',
-    '4.2d': 'trainer2_q4',
-    'trainer name 3': 'trainer3_name',
-    '4.3a': 'trainer3_q1',
-    '4.3b': 'trainer3_q2',
-    '4.3c': 'trainer3_q3',
-    '4.3d': 'trainer3_q4',
-    'trainer name 4': 'trainer4_name',
-    '4.4a': 'trainer4_q1',
-    '4.4b': 'trainer4_q2',
-    '4.4c': 'trainer4_q3',
-    '4.4d': 'trainer4_q4'
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--card-hover-shadow);
 }
 
-# Tables that should use REPLACE instead of INSERT ... ON DUPLICATE KEY UPDATE
-REPLACE_TABLES = ['induction', 'fta', 'jta', 'kaushalya', 'pragati', 'lakshya', 'live_trainer', 'fst']
+.stat-card .card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
 
-def validate_file(file):
-    if not file or file.filename == '':
-        return False, 'No file selected'
-    if not file.filename.endswith(('.xlsx', '.xls')):
-        return False, 'Only Excel files are allowed'
-    return True, 'File validated'
+.metric-subcard-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
 
-def clean_value(value):
-    if pd.isna(value):
-        return None
-    if isinstance(value, (int, float)):
-        return str(value)
-    return str(value).strip()
+.metric-subcard {
+  padding: 15px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(31, 30, 30, 0.1);
+  transition: background-color 0.2s;
+}
 
-def parse_date(date_val):
-    if pd.isna(date_val):
-        return None
-    try:
-        # If it's already a datetime object, extract the date
-        if isinstance(date_val, (datetime, pd.Timestamp)):
-            return date_val.date()
-        
-        # Convert to string and strip
-        date_str = str(date_val).strip()
-        
-        # Try common date formats
-        formats = [
-            '%Y-%m-%d',      # 2025-10-28
-            '%d/%m/%Y',      # 28/10/2025
-            '%m/%d/%Y',      # 10/28/2025
-            '%d-%m-%Y',      # 28-10-2025
-            '%m-%d-%Y',      # 10-28-2025
-            '%d/%m/%y',      # 28/10/25
-            '%m/%d/%y',      # 10/28/25
-            '%d-%m-%y',      # 28-10-25
-            '%m-%d-%y',      # 10-28-25
-        ]
-        
-        for fmt in formats:
-            try:
-                return datetime.strptime(date_str, fmt).date()
-            except ValueError:
-                continue
-                
-        # If none of the formats work, try pandas
-        parsed_date = pd.to_datetime(date_str, errors='coerce')
-        if not pd.isna(parsed_date):
-            return parsed_date.date()
-            
-        # Debug: Print if parsing failed
-        print(f"Failed to parse date: {date_str}")
-        return None
-    except Exception as e:
-        # Debug: Print the exception
-        print(f"Error parsing date '{date_val}': {str(e)}")
-        return None
+.metric-subcard:hover {
+  background-color: #f8f9fa;
+}
 
-def parse_time(time_val):
-    if pd.isna(time_val):
-        return None
-    try:
-        # Try to parse as time
-        return pd.to_datetime(time_val, errors='coerce').time()
-    except:
-        return None
+.metric-subcard:last-child {
+  border-bottom: none;
+}
 
-def process_data(df, table_config):
-    processed = []
-    errors = []
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 10px;
+}
 
-    # Normalize Excel column names
-    df.columns = [str(col).strip().lower() for col in df.columns]
+.stat-icon {
+  font-size: 24px;
+  color: #0000B8;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 28px;
+  margin: 5px 0;
+  color: #0000B8;
+}
+
+.stat-title {
+  font-size: 14px;
+  color: #000000;
+  margin: 0;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.download-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: transparent;
+  color: #0000B8;
+  border: 1px solid #4361ee;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.download-btn:hover {
+  background-color: #4361ee;
+  color: white;
+  transform: scale(1.05);
+}
+
+.download-btn i {
+  font-size: 14px;
+}
+
+/* Male Card Specific Styles */
+.male-card {
+  border-top: 5px solid var(--male-color) !important;
+}
+
+.male-card .stat-icon {
+  color: var(--male-color) !important;
+}
+
+.male-card .stat-value {
+  color: var(--male-color) !important;
+}
+
+.male-card .download-btn {
+  color: var(--male-color) !important;
+  border-color: var(--male-color) !important;
+}
+
+.male-card .download-btn:hover {
+  background-color: var(--male-color) !important;
+}
+
+/* Female Card Specific Styles */
+.female-card {
+  border-top: 5px solid var(--female-color) !important;
+}
+
+.female-card .stat-icon {
+  color: var(--female-color) !important;
+}
+
+.female-card .stat-value {
+  color: var(--female-color) !important;
+}
+
+.female-card .download-btn {
+  color: var(--female-color) !important;
+  border-color: var(--female-color) !important;
+}
+
+.female-card .download-btn:hover {
+  background-color: var(--female-color) !important;
+}
+
+/* Pass Card Specific Styles */
+.pass-card {
+  border-top: 5px solid var(--pass-color) !important;
+}
+
+.pass-card .stat-icon {
+  color: var(--pass-color) !important;
+}
+
+.pass-card .stat-value {
+  color: var(--pass-color) !important;
+}
+
+.pass-card .download-btn {
+  color: var(--pass-color) !important;
+  border-color: var(--pass-color) !important;
+}
+
+.pass-card .download-btn:hover {
+  background-color: var(--pass-color) !important;
+}
+
+/* Fail Card Specific Styles */
+.fail-card {
+  border-top: 5px solid var(--fail-color) !important;
+}
+
+.fail-card .stat-icon {
+  color: var(--fail-color) !important;
+}
+
+.fail-card .stat-value {
+  color: var(--fail-color) !important;
+}
+
+.fail-card .download-btn {
+  color: var(--fail-color) !important;
+  border-color: var(--fail-color) !important;
+}
+
+.fail-card .download-btn:hover {
+  background-color: var(--fail-color) !important;
+}
+
+    .data-table-container {
+      background-color: var(--card-bg);
+      border-radius: 14px;
+      box-shadow: var(--card-shadow);
+      padding: 30px;
+      overflow-x: auto;
+      margin-bottom: 30px;
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    .table {
+      width: 100%;
+      color: var(--dark-text);
+      border-collapse: collapse;
+    }
+
+    .table th {
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 15px;
+      background: #f1f5f9;
+      border-bottom: 2px solid rgba(15, 23, 42, 0.1);
+    }
+
+    .table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+    }
+
+    .table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .toggle-raw-data {
+      margin-bottom: 20px;
+    }
+
+    /* Improved loading spinner styles */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .loading-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .loading-spinner-container {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading-spinner {
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-left-color: var(--primary-color);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+    }
+
+    .loading-text {
+      font-size: 14px;
+      color: var(--dark-gray);
+      font-weight: 500;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Pagination styles */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .load-more-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 20px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .load-more-btn:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .load-more-btn:disabled {
+      background-color: #a0aec0;
+      cursor: not-allowed;
+    }
+
+    /* Tab styles */
+    .pragati-tabs {
+      display: flex;
+      background-color: var(--tab-bg);
+      border-radius: var(--border-radius);
+      margin-bottom: 24px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .pragati-tab {
+      flex: 1;
+      padding: 12px 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+      font-weight: 500;
+      color: var(--dark-gray);
+    }
+
+    .pragati-tab:hover {
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+
+    .pragati-tab.active {
+      background-color: var(--tab-active-bg);
+      border-bottom-color: var(--tab-active-border);
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 15px;
+        padding-left: calc(15px + var(--navbar-width));
+        margin-top: 100px;
+      }
+      
+      .dashboard-title {
+        font-size: 1.8rem;
+      }
+
+      .filter-control-area {
+        top: 60px;
+        left: 0;
+        width: 100%;
+        padding-left: calc(var(--navbar-width) + 15px);
+      }
+
+      .filter-side-panel {
+        width: 100%;
+        left: 0;
+        top: 130px;
+        height: calc(100vh - 130px);
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .table {
+        font-size: 0.8rem;
+      }
+      
+      .table th, .table td {
+        padding: 8px 10px;
+      }
+      
+      .filter-panel-actions {
+        flex-direction: column;
+      }
+      
+      .filter-panel-actions .btn {
+        margin-bottom: 10px;
+      }
+
+      .pragati-tabs {
+        flex-wrap: wrap;
+      }
+
+      .pragati-tab {
+        flex: 1 1 50%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .filter-actions {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+
+      .filter-label-container {
+        margin: 0 10px;
+      }
+
+      .applied-filters-strip {
+        display: none;
+      }
+
+      .pragati-tab {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  
+  {% include 'user/navbar.html' %}
+
+  <!-- Improved Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner-container">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading data...</div>
+    </div>
+  </div>
+
+  <!-- Filter Control Area -->
+  <div class="filter-control-area" id="filterControlArea">
+    <!-- Filter Toggle Button -->
+    <button class="filter-toggle-btn" id="filterToggleBtn" title="Toggle Filters">
+      <i class="fas fa-filter"></i>
+    </button>
     
-    # Create a normalized mapping with lowercase keys
-    normalized_mapping = {k.lower().strip(): v for k, v in COLUMN_MAPPING.items()}
+    <!-- Filter Label Container (now clickable) -->
+    <div class="filter-label-container" id="filterLabelContainer">
+      <i class="fas fa-filter"></i>
+      <div class="filter-label-text">Choose Filter</div>
+    </div>
     
-    # Debug: Print column names and mapping
-    print(f"Excel columns after normalization: {df.columns.tolist()}")
-    print(f"Normalized mapping keys: {list(normalized_mapping.keys())}")
+    <!-- Applied Filters Strip -->
+    <div class="applied-filters-strip" id="applied-filters">
+      <div class="applied-filters-container">
+        <span class="applied-filters-title">Applied Filters:</span>
+        <div class="applied-filters-list" id="appliedFiltersList"></div>
+      </div>
+    </div>
+  </div>
 
-    for idx, row in df.iterrows():
-        try:
-            # Initialize data_row with None for all columns
-            data_row = {col: None for col in table_config['columns']}
-            
-            # Map Excel columns to database columns
-            for excel_col in df.columns:
-                # Use normalized_mapping to find the database column
-                if excel_col in normalized_mapping:
-                    db_col = normalized_mapping[excel_col]
-                    if db_col in table_config['columns']:
-                        value = row[excel_col]
-                        if db_col == 'program_date':
-                            # Special handling for program_date
-                            data_row[db_col] = parse_date(value)
-                            # Debug: Print the date parsing result
-                            print(f"Row {idx+2}: Parsing program_date: {value} -> {data_row[db_col]}")
-                        elif 'date' in db_col:
-                            data_row[db_col] = parse_date(value)
-                        elif 'time' in db_col:
-                            data_row[db_col] = parse_time(value)
-                        else:
-                            data_row[db_col] = clean_value(value)
-                else:
-                    # If column is not in mapping but matches a column in the table config, use it directly
-                    if excel_col in [col.lower() for col in table_config['columns']]:
-                        # Find the original column name (case-sensitive)
-                        original_col = next((col for col in table_config['columns'] if col.lower() == excel_col), None)
-                        if original_col:
-                            value = row[excel_col]
-                            if original_col == 'program_date':
-                                # Special handling for program_date
-                                data_row[original_col] = parse_date(value)
-                                # Debug: Print the date parsing result
-                                print(f"Row {idx+2}: Parsing program_date (direct): {value} -> {data_row[original_col]}")
-                            elif 'date' in original_col:
-                                data_row[original_col] = parse_date(value)
-                            elif 'time' in original_col:
-                                data_row[original_col] = parse_time(value)
-                            else:
-                                data_row[original_col] = clean_value(value)
+  <!-- Filter Side Panel -->
+  <div class="filter-side-panel" id="filterSidePanel">
+    <div class="filter-panel-header">
+      <h3>Filter Options</h3>
+      <button type="button" class="btn-close btn-close-white" id="closeFilterBtn" aria-label="Close"></button>
+    </div>
+    
+    <div class="filter-panel-content">
+      <div class="filter-section">
+        <div class="filter-row">
+          <div class="filter-col">
+            <label class="filter-label">Factory</label>
+            <select class="form-control" id="filter-factory">
+              <option value="all">All Factories</option>
+            </select>
+          </div>
+          <div class="filter-col">
+            <label class="filter-label">Batch Number</label>
+            <select class="form-control" id="filter-batch">
+              <option value="all">All Batches</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="filter-row">
+          <div class="filter-col">
+            <label class="filter-label">Diploma Name</label>
+            <select class="form-control" id="filter-diploma">
+              <option value="all">All Diplomas</option>
+            </select>
+          </div>
+          <div class="filter-col">
+            <label class="filter-label">Gender</label>
+            <select class="form-control" id="filter-gender">
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
 
-            # Check required fields
-            missing_req = [req for req in table_config['required_columns'] if not data_row.get(req)]
-            if missing_req:
-                errors.append(f"Row {idx+2}: Missing {', '.join(missing_req)}")
-                continue
+        <div class="filter-row">
+          <div class="filter-col">
+            <label class="filter-label">Employee Category</label>
+            <select class="form-control" id="filter-category">
+              <option value="all">All</option>
+            </select>
+          </div>
+          <div class="filter-col">
+            <label class="filter-label">Course Year</label>
+            <select class="form-control" id="filter-course-year">
+              <option value="all">All Years</option>
+            </select>
+          </div>
+        </div>
 
-            processed.append(data_row)
-        except Exception as e:
-            errors.append(f"Row {idx+2}: Error - {str(e)}")
-    return processed, errors
+        <div class="filter-row">
+          <div class="filter-col">
+            <label class="filter-label">Final Result</label>
+            <select class="form-control" id="filter-final-result">
+              <option value="all">All Results</option>
+            </select>
+          </div>
+          <div class="filter-col">
+            <label class="filter-label">Training Name</label>
+            <select class="form-control" id="filter-training">
+              <option value="all">All Trainings</option>
+            </select>
+          </div>
+        </div>
 
-# Updated insert_data with support for tables without unique keys and REPLACE for specific tables
-def insert_data(table_name, data):
-    """
-    Inserts new records or updates existing ones based on unique key if specified.
-    For tables in REPLACE_TABLES, uses REPLACE to completely rewrite existing records.
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        table_config = TABLE_CONFIGS[table_name]
-        columns = table_config['columns']
-        insert_columns = [col for col in columns if col != 'sr_no']  # skip auto-increment
-        placeholders = ', '.join(['%s'] * len(insert_columns))
-        columns_str = ', '.join(insert_columns)
+        <div class="filter-row">
+          <div class="filter-col">
+            <label class="filter-label">Ticket Number</label>
+            <input type="text" class="form-control" id="filter-ticket" placeholder="Search ticket numbers">
+          </div>
+        </div>
 
-        # Check if table should use REPLACE
-        if table_name in REPLACE_TABLES:
-            # Use REPLACE to completely rewrite existing records
-            sql = f"""
-            REPLACE INTO {table_name} ({columns_str})
-            VALUES ({placeholders})
-            """
-        else:
-            # Check if table has a unique key
-            unique_key = table_config.get('unique_key')
-            if unique_key:
-                # Update only relevant columns (exclude sr_no and unique key)
-                update_cols = [col for col in insert_columns if col != unique_key]
-                update_str = ', '.join([f"{col} = VALUES({col})" for col in update_cols])
-                
-                sql = f"""
-                INSERT INTO {table_name} ({columns_str})
-                VALUES ({placeholders})
-                ON DUPLICATE KEY UPDATE {update_str}
-                """
-            else:
-                # No unique key, insert only
-                sql = f"""
-                INSERT INTO {table_name} ({columns_str})
-                VALUES ({placeholders})
-                """
+        <div class="filter-row">
+          <div class="filter-col">
+            <label class="filter-label">Date Range</label>
+            <input type="date" class="form-control" id="filter-start-date" placeholder="Start Date">
+          </div>
+          <div class="filter-col">
+            <label class="filter-label">&nbsp;</label>
+            <input type="date" class="form-control" id="filter-end-date" placeholder="End Date">
+          </div>
+        </div>
+      </div>
+    </div>
 
-        values_list = [[row.get(col) for col in insert_columns] for row in data]
-        cursor.executemany(sql, values_list)
-        conn.commit()
-        return True, f"Processed {len(data)} records into {table_name}"
-    except Exception as e:
-        conn.rollback()
-        return False, f"Database error: {str(e)}"
-    finally:
-        cursor.close()
-        conn.close()
+    <div class="filter-panel-actions">
+      <button class="btn btn-primary" id="apply-filters">
+        <i class="bi bi-funnel"></i> Apply Filters
+      </button>
+      <button class="btn btn-secondary" id="reset-filters">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset
+      </button>
+    </div>
+  </div>
 
-@bp.route('/upload_page')
-def upload_page():
-    return render_template('admin_upload_files.html', table_configs=TABLE_CONFIGS)
+  <div class="dashboard-container">
+    <!-- Pragati Tabs -->
+    <div class="pragati-tabs">
+      <div class="pragati-tab active" data-tab="overall">
+        <i class="fas fa-users"></i> Overall Count
+      </div>
+      <div class="pragati-tab" data-tab="live">
+        <i class="fas fa-user-clock"></i> Live Count
+      </div>
+      <div class="pragati-tab" data-tab="first-year">
+        <i class="fas fa-user-graduate"></i> 1st Year Count
+      </div>
+      <div class="pragati-tab" data-tab="second-year">
+        <i class="fas fa-user-tie"></i> 2nd Year Count
+      </div>
+    </div>
 
-@bp.route('/upload', methods=['POST'])
-def upload_data():
-    try:
-        table_name = request.form.get('table_name')
-        if not table_name or table_name not in TABLE_CONFIGS:
-            flash('Invalid table selected', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
+    <!-- Tab Content -->
+    <div class="tab-content active" id="overall-tab-content">
+      <div class="stats-grid">
+        <!-- Coverage Count Card -->
+        <div class="stat-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-excel-btn" title="Download Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">Coverage Count</div>
+                <div class="stat-value" id="stat-coverage">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Male Count Card -->
+        <div class="stat-card male-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-gender-male"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-male-btn" title="Download Male Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">Male Count</div>
+                <div class="stat-value" id="stat-male">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Female Count Card -->
+        <div class="stat-card female-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-gender-female"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-female-btn" title="Download Female Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">Female Count</div>
+                <div class="stat-value" id="stat-female">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Batch Number Card -->
+        <div class="stat-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-collection"></i></div>
+                </div>
+                <div class="stat-title">No. of Batches</div>
+                <div class="stat-value" id="stat-batches">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Passout Count Card -->
+        <div class="stat-card pass-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-passout-btn" title="Download Passout Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">Passout Count</div>
+                <div class="stat-value" id="stat-passout">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Fail Count Card -->
+        <div class="stat-card fail-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-fail-btn" title="Download Fail Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">Fail Count</div>
+                <div class="stat-value" id="stat-fail">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        if 'file' not in request.files:
-            flash('No file provided', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
+    <div class="tab-content" id="live-tab-content">
+      <div class="stats-grid">
+        <!-- Live Coverage Count Card -->
+        <div class="stat-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-live-excel-btn" title="Download Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">Live Coverage Count</div>
+                <div class="stat-value" id="stat-live-coverage">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Live Male Count Card -->
+        <div class="stat-card male-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-gender-male"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-live-male-btn" title="Download Male Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">Live Male Count</div>
+                <div class="stat-value" id="stat-live-male">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Live Female Count Card -->
+        <div class="stat-card female-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-gender-female"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-live-female-btn" title="Download Female Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">Live Female Count</div>
+                <div class="stat-value" id="stat-live-female">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Live Batch Number Card -->
+        <div class="stat-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-collection"></i></div>
+                </div>
+                <div class="stat-title">Live No. of Batches</div>
+                <div class="stat-value" id="stat-live-batches">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        file = request.files['file']
-        is_valid, msg = validate_file(file)
-        if not is_valid:
-            flash(msg, 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
+    <div class="tab-content" id="first-year-tab-content">
+      <div class="stats-grid">
+        <!-- 1st Year Coverage Count Card -->
+        <div class="stat-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-first-year-excel-btn" title="Download Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">1st Year Coverage Count</div>
+                <div class="stat-value" id="stat-first-year-coverage">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 1st Year Male Count Card -->
+        <div class="stat-card male-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-gender-male"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-first-year-male-btn" title="Download Male Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">1st Year Male Count</div>
+                <div class="stat-value" id="stat-first-year-male">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 1st Year Female Count Card -->
+        <div class="stat-card female-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-gender-female"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-first-year-female-btn" title="Download Female Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">1st Year Female Count</div>
+                <div class="stat-value" id="stat-first-year-female">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 1st Year Batch Number Card -->
+        <div class="stat-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-collection"></i></div>
+                </div>
+                <div class="stat-title">1st Year No. of Batches</div>
+                <div class="stat-value" id="stat-first-year-batches">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        try:
-            df = pd.read_excel(file)
-            # Debug: Print first few rows
-            print(f"First 5 rows of Excel data:\n{df.head()}")
-        except Exception as e:
-            flash(f'Error reading Excel: {str(e)}', 'danger')
-            return redirect(url_for('cd_data_store.upload_page'))
+    <div class="tab-content" id="second-year-tab-content">
+      <div class="stats-grid">
+        <!-- 2nd Year Coverage Count Card -->
+        <div class="stat-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-second-year-excel-btn" title="Download Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">2nd Year Coverage Count</div>
+                <div class="stat-value" id="stat-second-year-coverage">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 2nd Year Male Count Card -->
+        <div class="stat-card male-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-gender-male"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-second-year-male-btn" title="Download Male Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">2nd Year Male Count</div>
+                <div class="stat-value" id="stat-second-year-male">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 2nd Year Female Count Card -->
+        <div class="stat-card female-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-gender-female"></i></div>
+                  <button class="btn btn-sm download-btn" id="download-second-year-female-btn" title="Download Female Report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </div>
+                <div class="stat-title">2nd Year Female Count</div>
+                <div class="stat-value" id="stat-second-year-female">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 2nd Year Batch Number Card -->
+        <div class="stat-card">
+          <div class="card-body">
+            <div class="metric-subcard-container">
+              <div class="metric-subcard">
+                <div class="card-header">
+                  <div class="stat-icon"><i class="bi bi-collection"></i></div>
+                </div>
+                <div class="stat-title">2nd Year No. of Batches</div>
+                <div class="stat-value" id="stat-second-year-batches">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        processed_data, errors = process_data(df, TABLE_CONFIGS[table_name])
-        if errors:
-            flash(f'Found {len(errors)} errors in data. First error: {errors[0]}', 'warning')
-            return redirect(url_for('cd_data_store.upload_page'))
-        if not processed_data:
-            flash('No valid data to process', 'warning')
-            return redirect(url_for('cd_data_store.upload_page'))
+    <div class="toggle-raw-data form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="show-raw-data">
+      <label class="form-check-label" for="show-raw-data">Show Raw Data</label>
+    </div>
 
-        success, msg = insert_data(table_name, processed_data)
-        flash(msg, 'success' if success else 'danger')
-        return redirect(url_for('cd_data_store.upload_page'))
-    except Exception as e:
-        flash(f'Unexpected error: {str(e)}', 'danger')
-        return redirect(url_for('cd_data_store.upload_page'))
+    <div class="data-table-container" id="raw-data-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Sr No</th>
+            <th>Ticket No</th>
+            <th>Name</th>
+            <th>Gender</th>
+            <th>Employee Category</th>
+            <th>Factory</th>
+            <th>Course Joining Year</th>
+            <th>Date of Joining</th>
+            <th>Pragati Batch No</th>
+            <th>Diploma Name</th>
+            <th>1st Year Result</th>
+            <th>2nd Year Result</th>
+            <th>Final Result</th>
+            <th>Training Name</th>
+            <th>Remark</th>
+          </tr>
+        </thead>
+        <tbody id="raw-data-body">
+          <!-- Data will be populated here -->
+        </tbody>
+      </table>
+      <div class="pagination-container">
+        <button class="load-more-btn" id="load-more-btn">Load More</button>
+      </div>
+    </div>
+  </div>
 
-@bp.route('/api/upload/<table_name>', methods=['POST'])
-def api_upload_data(table_name):
-    try:
-        if table_name not in TABLE_CONFIGS:
-            return jsonify({'success': False, 'message': 'Invalid table name'}), 400
-        if 'file' not in request.files:
-            return jsonify({'success': False, 'message': 'No file provided'}), 400
-        file = request.files['file']
-        is_valid, msg = validate_file(file)
-        if not is_valid:
-            return jsonify({'success': False, 'message': msg}), 400
-        try:
-            df = pd.read_excel(file)
-        except Exception as e:
-            return jsonify({'success': False, 'message': f'Error reading Excel: {str(e)}'}), 400
+  <!-- Include necessary scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // DOM Elements
+      const filterToggleBtn = document.getElementById('filterToggleBtn');
+      const filterLabelContainer = document.getElementById('filterLabelContainer');
+      const filterSidePanel = document.getElementById('filterSidePanel');
+      const filterControlArea = document.getElementById('filterControlArea');
+      const closeFilterBtn = document.getElementById('closeFilterBtn');
+      const applyFiltersBtn = document.getElementById('apply-filters');
+      const resetFiltersBtn = document.getElementById('reset-filters');
+      const showRawDataToggle = document.getElementById('show-raw-data');
+      const rawDataContainer = document.getElementById('raw-data-container');
+      const rawDataBody = document.getElementById('raw-data-body');
+      const appliedFiltersStrip = document.getElementById('applied-filters');
+      const appliedFiltersList = document.getElementById('appliedFiltersList');
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      const loadMoreBtn = document.getElementById('load-more-btn');
+      
+      // Download buttons for overall tab
+      const downloadExcelBtn = document.getElementById('download-excel-btn');
+      const downloadMaleBtn = document.getElementById('download-male-btn');
+      const downloadFemaleBtn = document.getElementById('download-female-btn');
+      const downloadPassoutBtn = document.getElementById('download-passout-btn');
+      const downloadFailBtn = document.getElementById('download-fail-btn');
+      
+      // Download buttons for live tab
+      const downloadLiveExcelBtn = document.getElementById('download-live-excel-btn');
+      const downloadLiveMaleBtn = document.getElementById('download-live-male-btn');
+      const downloadLiveFemaleBtn = document.getElementById('download-live-female-btn');
+      
+      // Download buttons for first year tab
+      const downloadFirstYearExcelBtn = document.getElementById('download-first-year-excel-btn');
+      const downloadFirstYearMaleBtn = document.getElementById('download-first-year-male-btn');
+      const downloadFirstYearFemaleBtn = document.getElementById('download-first-year-female-btn');
+      
+      // Download buttons for second year tab
+      const downloadSecondYearExcelBtn = document.getElementById('download-second-year-excel-btn');
+      const downloadSecondYearMaleBtn = document.getElementById('download-second-year-male-btn');
+      const downloadSecondYearFemaleBtn = document.getElementById('download-second-year-female-btn');
+      
+      // Tab elements
+      const pragatiTabs = document.querySelectorAll('.pragati-tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      // Filter elements
+      const filterFactory = document.getElementById('filter-factory');
+      const filterBatch = document.getElementById('filter-batch');
+      const filterDiploma = document.getElementById('filter-diploma');
+      const filterGender = document.getElementById('filter-gender');
+      const filterCategory = document.getElementById('filter-category');
+      const filterCourseYear = document.getElementById('filter-course-year');
+      const filterFinalResult = document.getElementById('filter-final-result');
+      const filterTraining = document.getElementById('filter-training');
+      const filterTicket = document.getElementById('filter-ticket');
+      const filterStartDate = document.getElementById('filter-start-date');
+      const filterEndDate = document.getElementById('filter-end-date');
+      
+      // Stat elements for overall tab
+      const statBatches = document.getElementById('stat-batches');
+      const statCoverage = document.getElementById('stat-coverage');
+      const statMale = document.getElementById('stat-male');
+      const statFemale = document.getElementById('stat-female');
+      const statPassout = document.getElementById('stat-passout');
+      const statFail = document.getElementById('stat-fail');
+      
+      // Stat elements for live tab
+      const statLiveBatches = document.getElementById('stat-live-batches');
+      const statLiveCoverage = document.getElementById('stat-live-coverage');
+      const statLiveMale = document.getElementById('stat-live-male');
+      const statLiveFemale = document.getElementById('stat-live-female');
+      
+      // Stat elements for first year tab
+      const statFirstYearBatches = document.getElementById('stat-first-year-batches');
+      const statFirstYearCoverage = document.getElementById('stat-first-year-coverage');
+      const statFirstYearMale = document.getElementById('stat-first-year-male');
+      const statFirstYearFemale = document.getElementById('stat-first-year-female');
+      
+      // Stat elements for second year tab
+      const statSecondYearBatches = document.getElementById('stat-second-year-batches');
+      const statSecondYearCoverage = document.getElementById('stat-second-year-coverage');
+      const statSecondYearMale = document.getElementById('stat-second-year-male');
+      const statSecondYearFemale = document.getElementById('stat-second-year-female');
 
-        processed_data, errors = process_data(df, TABLE_CONFIGS[table_name])
-        if errors:
-            return jsonify({
-                'success': False,
-                'message': 'Data validation errors',
-                'errors': errors[:5],
-                'valid_records': len(processed_data)
-            }), 400
-        if not processed_data:
-            return jsonify({'success': False, 'message': 'No valid data to process'}), 400
+      // Pagination variables
+      let currentPage = 0;
+      const pageSize = 50;
+      let totalRecords = 0;
+      let isLoading = false;
+      let isInitialized = false;
+      let activeTab = 'overall';
 
-        success, msg = insert_data(table_name, processed_data)
-        if success:
-            return jsonify({
-                'success': True,
-                'message': msg,
-                'records_processed': len(processed_data)
-            }), 200
-        else:
-            return jsonify({'success': False, 'message': msg}), 500
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'Unexpected error: {str(e)}'}), 500
+      // Initialize date pickers
+      flatpickr("#filter-start-date", {
+        dateFormat: "Y-m-d",
+        maxDate: new Date()
+      });
+      
+      flatpickr("#filter-end-date", {
+        dateFormat: "Y-m-d",
+        maxDate: new Date()
+      });
 
-@bp.route('/api/tables', methods=['GET'])
-def api_get_tables():
-    tables_info = {
-        name: {
-            'display_name': config['display_name'],
-            'columns': config['columns'],
-            'required_columns': config['required_columns']
+      // Toggle filter panel
+      filterToggleBtn.addEventListener('click', toggleFilterPanel);
+      filterLabelContainer.addEventListener('click', toggleFilterPanel);
+      closeFilterBtn.addEventListener('click', toggleFilterPanel);
+      
+      function toggleFilterPanel() {
+        filterSidePanel.classList.toggle('active');
+        filterControlArea.classList.toggle('panel-open');
+      }
+
+      // Close filter panel when clicking outside
+      document.addEventListener('click', function(event) {
+        if (
+          !filterSidePanel.contains(event.target) &&
+          !filterToggleBtn.contains(event.target) &&
+          !filterLabelContainer.contains(event.target) &&
+          filterSidePanel.classList.contains('active')
+        ) {
+          filterSidePanel.classList.remove('active');
+          filterControlArea.classList.remove('panel-open');
         }
-        for name, config in TABLE_CONFIGS.items()
-    }
-    return jsonify({'success': True, 'tables': tables_info}), 200
+      });
+
+      // Improved loading functions
+      function showLoading() {
+        loadingOverlay.classList.add('active');
+      }
+      
+      function hideLoading() {
+        loadingOverlay.classList.remove('active');
+      }
+
+      // Tab switching
+      pragatiTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          // Remove active class from all tabs and contents
+          pragatiTabs.forEach(t => t.classList.remove('active'));
+          tabContents.forEach(c => c.classList.remove('active'));
+          
+          // Add active class to clicked tab
+          this.classList.add('active');
+          activeTab = this.getAttribute('data-tab');
+          
+          // Show corresponding content
+          document.getElementById(`${activeTab}-tab-content`).classList.add('active');
+          
+          // Fetch data for the active tab
+          fetchPragatiData();
+        });
+      });
+
+      // Fetch filter options from database
+      function fetchFilterOptions() {
+        // Only show loading spinner on initial load
+        if (!isInitialized) {
+          showLoading();
+        }
+        
+        fetch('/user_tech/api/pragati/filter-options')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Filter options data:', data); // Debug: log the response
+            
+            // Populate factory options
+            filterFactory.innerHTML = '<option value="all">All Factories</option>';
+            data.factories.forEach(factory => {
+              const option = document.createElement('option');
+              option.value = factory;
+              option.textContent = factory;
+              filterFactory.appendChild(option);
+            });
+            
+            // Populate batch options
+            filterBatch.innerHTML = '<option value="all">All Batches</option>';
+            data.batches.forEach(batch => {
+              const option = document.createElement('option');
+              option.value = batch;
+              option.textContent = batch;
+              filterBatch.appendChild(option);
+            });
+            
+            // Populate diploma options
+            filterDiploma.innerHTML = '<option value="all">All Diplomas</option>';
+            data.diplomas.forEach(diploma => {
+              const option = document.createElement('option');
+              option.value = diploma;
+              option.textContent = diploma;
+              filterDiploma.appendChild(option);
+            });
+            
+            // Populate gender options
+            filterGender.innerHTML = '<option value="all">All</option>';
+            data.genders.forEach(gender => {
+              const option = document.createElement('option');
+              option.value = gender;
+              option.textContent = gender;
+              filterGender.appendChild(option);
+            });
+            
+            // Populate category options
+            filterCategory.innerHTML = '<option value="all">All</option>';
+            data.categories.forEach(category => {
+              const option = document.createElement('option');
+              option.value = category;
+              option.textContent = category;
+              filterCategory.appendChild(option);
+            });
+            
+            // Populate course year options
+            filterCourseYear.innerHTML = '<option value="all">All Years</option>';
+            data.course_years.forEach(year => {
+              const option = document.createElement('option');
+              option.value = year;
+              option.textContent = year;
+              filterCourseYear.appendChild(option);
+            });
+            
+            // Populate final result options
+            filterFinalResult.innerHTML = '<option value="all">All Results</option>';
+            data.final_results.forEach(result => {
+              const option = document.createElement('option');
+              option.value = result;
+              option.textContent = result;
+              filterFinalResult.appendChild(option);
+            });
+            
+            // Populate training options
+            filterTraining.innerHTML = '<option value="all">All Trainings</option>';
+            data.trainings.forEach(training => {
+              const option = document.createElement('option');
+              option.value = training;
+              option.textContent = training;
+              filterTraining.appendChild(option);
+            });
+            
+            // Load initial data without setting current year as default
+            fetchPragatiData();
+            
+            // Mark as initialized
+            isInitialized = true;
+          })
+          .catch(error => {
+            console.error('Error fetching filter options:', error);
+            alert('Error loading filter options. Please try again later.');
+            hideLoading();
+          });
+      }
+
+      // Fetch Pragati data based on filters and active tab
+      function fetchPragatiData(isLoadMore = false) {
+        if (isLoading) return;
+        
+        if (!isLoadMore) {
+          currentPage = 0;
+          rawDataBody.innerHTML = '';
+        }
+        
+        // Only show loading spinner if not initial load
+        if (isInitialized) {
+          showLoading();
+        }
+        
+        isLoading = true;
+        
+        // Build filter parameters
+        const filters = {
+          factory: filterFactory.value,
+          batch: filterBatch.value,
+          diploma: filterDiploma.value,
+          gender: filterGender.value,
+          category: filterCategory.value,
+          course_year: filterCourseYear.value,
+          final_result: filterFinalResult.value,
+          training: filterTraining.value,
+          ticket: filterTicket.value,
+          startDate: filterStartDate.value,
+          endDate: filterEndDate.value,
+          limit: pageSize,
+          offset: currentPage * pageSize,
+          tab: activeTab  // Add active tab parameter
+        };
+        
+        console.log('Applying filters:', filters); // Debug: log filters
+        
+        // Build query string
+        const queryString = new URLSearchParams();
+        for (const key in filters) {
+          if (filters[key] !== 'all' && filters[key] !== '') {
+            queryString.append(key, filters[key]);
+          }
+        }
+        
+        fetch(`/user_tech/api/pragati/data?${queryString.toString()}`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Pragati data:', data); // Debug: log the response
+            
+            // Update statistics based on active tab
+            if (activeTab === 'overall') {
+              statBatches.textContent = data.stats.batch_count;
+              statCoverage.textContent = data.stats.coverage_count;
+              statMale.textContent = data.stats.male_count;
+              statFemale.textContent = data.stats.female_count;
+              statPassout.textContent = data.stats.pass_count || 0;
+              statFail.textContent = data.stats.fail_count || 0;
+            } else if (activeTab === 'live') {
+              statLiveBatches.textContent = data.stats.batch_count;
+              statLiveCoverage.textContent = data.stats.coverage_count;
+              statLiveMale.textContent = data.stats.male_count;
+              statLiveFemale.textContent = data.stats.female_count;
+            } else if (activeTab === 'first-year') {
+              statFirstYearBatches.textContent = data.stats.batch_count;
+              statFirstYearCoverage.textContent = data.stats.coverage_count;
+              statFirstYearMale.textContent = data.stats.male_count;
+              statFirstYearFemale.textContent = data.stats.female_count;
+            } else if (activeTab === 'second-year') {
+              statSecondYearBatches.textContent = data.stats.batch_count;
+              statSecondYearCoverage.textContent = data.stats.coverage_count;
+              statSecondYearMale.textContent = data.stats.male_count;
+              statSecondYearFemale.textContent = data.stats.female_count;
+            }
+            
+            // Update raw data if visible
+            if (showRawDataToggle.checked) {
+              updateRawDataTable(data.records, isLoadMore);
+            }
+            
+            // Update applied filters display
+            updateAppliedFilters(filters);
+            
+            // Update pagination
+            totalRecords = data.total_records;
+            updatePagination();
+            
+            hideLoading();
+            isLoading = false;
+          })
+          .catch(error => {
+            console.error('Error fetching Pragati data:', error);
+            alert('Error loading data. Please try again later.');
+            hideLoading();
+            isLoading = false;
+          });
+      }
+
+      // Update raw data table
+      function updateRawDataTable(records, isAppend = false) {
+        if (!isAppend) {
+          rawDataBody.innerHTML = '';
+        }
+        
+        if (records.length === 0 && !isAppend) {
+          const row = document.createElement('tr');
+          row.innerHTML = '<td colspan="15" class="text-center">No data found</td>';
+          rawDataBody.appendChild(row);
+          return;
+        }
+        
+        records.forEach(record => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${record.sr_no || ''}</td>
+            <td>${record.ticket_no || ''}</td>
+            <td>${record.name || ''}</td>
+            <td>${record.gender || ''}</td>
+            <td>${record.employee_category || ''}</td>
+            <td>${record.factory || ''}</td>
+            <td>${record.course_joining_year || ''}</td>
+            <td>${record.date_of_joining || ''}</td>
+            <td>${record.pragati_batch_number || ''}</td>
+            <td>${record.diploma_name || ''}</td>
+            <td>${record.first_year_result || ''}</td>
+            <td>${record.second_year_result || ''}</td>
+            <td>${record.final_result || ''}</td>
+            <td>${record.training_name || ''}</td>
+            <td>${record.remark || ''}</td>
+          `;
+          rawDataBody.appendChild(row);
+        });
+      }
+
+      // Update pagination
+      function updatePagination() {
+        const loadedRecords = currentPage * pageSize + rawDataBody.children.length;
+        
+        if (loadedRecords >= totalRecords) {
+          loadMoreBtn.disabled = true;
+          loadMoreBtn.textContent = 'All records loaded';
+        } else {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = 'Load More';
+        }
+      }
+
+      // Update applied filters display
+      function updateAppliedFilters(filters) {
+        appliedFiltersList.innerHTML = '';
+        let hasFilters = false;
+        
+        const filterLabels = {
+          factory: 'Factory',
+          batch: 'Batch',
+          diploma: 'Diploma',
+          gender: 'Gender',
+          category: 'Employee Category',
+          course_year: 'Course Year',
+          final_result: 'Final Result',
+          training: 'Training',
+          ticket: 'Ticket Number',
+          startDate: 'Start Date',
+          endDate: 'End Date'
+        };
+        
+        for (const key in filters) {
+          if (filters[key] && filters[key] !== 'all' && filters[key] !== '' && key !== 'limit' && key !== 'offset' && key !== 'tab') {
+            hasFilters = true;
+            const filterItem = document.createElement('div');
+            filterItem.className = 'applied-filter-item';
+            
+            let displayValue = filters[key];
+            if (key === 'startDate' || key === 'endDate') {
+              displayValue = new Date(filters[key]).toLocaleDateString();
+            }
+            
+            filterItem.innerHTML = `
+              <span class="filter-key">${filterLabels[key]}:</span>
+              <span class="filter-value">${displayValue}</span>
+            `;
+            appliedFiltersList.appendChild(filterItem);
+          }
+        }
+        
+        // Add active tab as a filter
+        if (activeTab !== 'overall') {
+          hasFilters = true;
+          const filterItem = document.createElement('div');
+          filterItem.className = 'applied-filter-item';
+          
+          let tabLabel = '';
+          if (activeTab === 'live') tabLabel = 'Live Count';
+          else if (activeTab === 'first-year') tabLabel = '1st Year Count';
+          else if (activeTab === 'second-year') tabLabel = '2nd Year Count';
+          
+          filterItem.innerHTML = `
+            <span class="filter-key">View:</span>
+            <span class="filter-value">${tabLabel}</span>
+          `;
+          appliedFiltersList.appendChild(filterItem);
+        }
+        
+        appliedFiltersStrip.style.display = hasFilters ? 'flex' : 'none';
+      }
+
+      // Function to download data by gender
+      function downloadByGender(gender) {
+        // Build the same filter parameters as when fetching data
+        const filters = {
+          factory: filterFactory.value,
+          batch: filterBatch.value,
+          diploma: filterDiploma.value,
+          gender: gender, // This will be either 'Male' or 'Female'
+          category: filterCategory.value,
+          course_year: filterCourseYear.value,
+          final_result: filterFinalResult.value,
+          training: filterTraining.value,
+          ticket: filterTicket.value,
+          startDate: filterStartDate.value,
+          endDate: filterEndDate.value,
+          tab: activeTab  // Add active tab parameter
+        };
+        
+        // Build query string
+        const queryString = new URLSearchParams();
+        for (const key in filters) {
+          if (filters[key] !== 'all' && filters[key] !== '') {
+            queryString.append(key, filters[key]);
+          }
+        }
+        
+        // Open the download link
+        const downloadUrl = `/user_tech/api/pragati/download?${queryString.toString()}`;
+        window.location.href = downloadUrl;
+      }
+
+      // Function to download data for specific tab
+      function downloadForTab() {
+        // Build the same filter parameters as when fetching data
+        const filters = {
+          factory: filterFactory.value,
+          batch: filterBatch.value,
+          diploma: filterDiploma.value,
+          gender: filterGender.value,
+          category: filterCategory.value,
+          course_year: filterCourseYear.value,
+          final_result: filterFinalResult.value,
+          training: filterTraining.value,
+          ticket: filterTicket.value,
+          startDate: filterStartDate.value,
+          endDate: filterEndDate.value,
+          tab: activeTab  // Add active tab parameter
+        };
+        
+        // Build query string
+        const queryString = new URLSearchParams();
+        for (const key in filters) {
+          if (filters[key] !== 'all' && filters[key] !== '') {
+            queryString.append(key, filters[key]);
+          }
+        }
+        
+        // Open the download link
+        const downloadUrl = `/user_tech/api/pragati/download?${queryString.toString()}`;
+        window.location.href = downloadUrl;
+      }
+
+      // Function to download passout data
+      function downloadPassout() {
+        // Build the same filter parameters as when fetching data
+        const filters = {
+          factory: filterFactory.value,
+          batch: filterBatch.value,
+          diploma: filterDiploma.value,
+          gender: filterGender.value,
+          category: filterCategory.value,
+          course_year: filterCourseYear.value,
+          final_result: 'Pass', // Only passout students
+          training: filterTraining.value,
+          ticket: filterTicket.value,
+          startDate: filterStartDate.value,
+          endDate: filterEndDate.value,
+          tab: activeTab  // Add active tab parameter
+        };
+        
+        // Build query string
+        const queryString = new URLSearchParams();
+        for (const key in filters) {
+          if (filters[key] !== 'all' && filters[key] !== '') {
+            queryString.append(key, filters[key]);
+          }
+        }
+        
+        // Open the download link
+        const downloadUrl = `/user_tech/api/pragati/download?${queryString.toString()}`;
+        window.location.href = downloadUrl;
+      }
+
+      // Function to download fail data
+      function downloadFail() {
+        // Build the same filter parameters as when fetching data
+        const filters = {
+          factory: filterFactory.value,
+          batch: filterBatch.value,
+          diploma: filterDiploma.value,
+          gender: filterGender.value,
+          category: filterCategory.value,
+          course_year: filterCourseYear.value,
+          final_result: 'Fail', // Only fail students
+          training: filterTraining.value,
+          ticket: filterTicket.value,
+          startDate: filterStartDate.value,
+          endDate: filterEndDate.value,
+          tab: activeTab  // Add active tab parameter
+        };
+        
+        // Build query string
+        const queryString = new URLSearchParams();
+        for (const key in filters) {
+          if (filters[key] !== 'all' && filters[key] !== '') {
+            queryString.append(key, filters[key]);
+          }
+        }
+        
+        // Open the download link
+        const downloadUrl = `/user_tech/api/pragati/download?${queryString.toString()}`;
+        window.location.href = downloadUrl;
+      }
+
+      // Event listeners
+      applyFiltersBtn.addEventListener('click', function() {
+        fetchPragatiData();
+        // Hide filter panel after applying filters
+        filterSidePanel.classList.remove('active');
+        filterControlArea.classList.remove('panel-open');
+      });
+      
+      resetFiltersBtn.addEventListener('click', function() {
+        filterFactory.value = 'all';
+        filterBatch.value = 'all';
+        filterDiploma.value = 'all';
+        filterGender.value = 'all';
+        filterCategory.value = 'all';
+        filterCourseYear.value = 'all';
+        filterFinalResult.value = 'all';
+        filterTraining.value = 'all';
+        filterTicket.value = '';
+        filterStartDate.value = '';
+        filterEndDate.value = '';
+        
+        fetchPragatiData();
+        // Hide filter panel after resetting
+        filterSidePanel.classList.remove('active');
+        filterControlArea.classList.remove('panel-open');
+      });
+      
+      showRawDataToggle.addEventListener('change', function() {
+        rawDataContainer.style.display = this.checked ? 'block' : 'none';
+        if (this.checked) {
+          // If toggled on, refresh data to show in table
+          fetchPragatiData();
+        }
+      });
+
+      // Load more button event listener
+      loadMoreBtn.addEventListener('click', function() {
+        currentPage++;
+        fetchPragatiData(true);
+      });
+
+      // Download Excel button event listeners for overall tab
+      downloadExcelBtn.addEventListener('click', downloadForTab);
+      downloadMaleBtn.addEventListener('click', function() { downloadByGender('Male'); });
+      downloadFemaleBtn.addEventListener('click', function() { downloadByGender('Female'); });
+      downloadPassoutBtn.addEventListener('click', downloadPassout);
+      downloadFailBtn.addEventListener('click', downloadFail);
+      
+      // Download Excel button event listeners for live tab
+      downloadLiveExcelBtn.addEventListener('click', downloadForTab);
+      downloadLiveMaleBtn.addEventListener('click', function() { downloadByGender('Male'); });
+      downloadLiveFemaleBtn.addEventListener('click', function() { downloadByGender('Female'); });
+      
+      // Download Excel button event listeners for first year tab
+      downloadFirstYearExcelBtn.addEventListener('click', downloadForTab);
+      downloadFirstYearMaleBtn.addEventListener('click', function() { downloadByGender('Male'); });
+      downloadFirstYearFemaleBtn.addEventListener('click', function() { downloadByGender('Female'); });
+      
+      // Download Excel button event listeners for second year tab
+      downloadSecondYearExcelBtn.addEventListener('click', downloadForTab);
+      downloadSecondYearMaleBtn.addEventListener('click', function() { downloadByGender('Male'); });
+      downloadSecondYearFemaleBtn.addEventListener('click', function() { downloadByGender('Female'); });
+
+      // Initialize the dashboard
+      fetchFilterOptions();
+    });
+  </script>
+</body>
+</html>
