@@ -1,1737 +1,2046 @@
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JTA Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root {
-      --primary-color: #003366;
-      --secondary-color: #0077b6;
-      --accent-color: #f72585;
-      --light-gray: #f8f9fa;
-      --dark-gray: #212529;
-      --success-color: #4cc9f0;
-      --danger-color: #ef233c;
-      --warning-color: #f8961e;
-      --info-color: #4895ef;
-      --card-shadow: 0 4px 12px rgba(0,0,0,0.06);
-      --card-hover-shadow: 0 6px 16px rgba(0, 55, 102, 0.1);
-      --filter-col-min-width: 180px;
-      --filter-gap: 18px;
-      --row-gap: 20px;
-      --border-radius: 10px;
-      --panel-width: 350px;
-      --toggle-size: 40px;
-      --control-area-height: 70px;
-      --strip-margin-bottom: 10px;
-      --card-bg: rgba(255,255,255,0.95);
-      --light-text: #ffffff;
-      --dark-text: #0f172a;
-      --navbar-width: 70px;
-      --pink-color: #f72585;
-      --male-color: #4361ee;
-      --female-color: #f72585;
-      --live-color: #38b000;
-      --current-year-color: #ff9e00;
-    }
-
-    *, *:after, *:before {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      height: auto;
-      margin: 0;
-      overflow-x: hidden;
-      scroll-behavior: smooth;
-      font-size: 14px;
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-      background: linear-gradient(135deg, #08203e 0%, #557c93 100%);
-      font-family: 'Poppins', sans-serif;
-    }
-
-    html::-webkit-scrollbar,
-    body::-webkit-scrollbar {
-      display: none;
-    }
-
-    body {
-      padding-top: 0;
-    }
-
-    .dashboard-container {
-      width: 100%;
-      max-width: 1800px;
-      margin-top: 250px;
-      padding: 20px;
-      padding-left: calc(20px + var(--navbar-width));
-      transition: all 0.3s ease;
-    }
-
-    .heading-icon {
-      width: 18px;
-      height: 18px;
-      fill: var(--secondary-color);
-      flex-shrink: 0;
-    }
-    
-    .filter-control-area {
-      position: fixed;
-      top: 105px;
-      height: var(--control-area-height);
-      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-      border-radius: 0 0 10px 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border-left: 3px solid #4361ee;
-      border-bottom: 2px solid #4361ee;
-      border-right: 2px solid #4361ee;
-      display: flex;
-      align-items: center;
-      padding: 0 15px;
-      z-index: 9999;
-      transition: all 0.3s ease;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .filter-control-area.fixed {
-      position: fixed;
-      top: 0;
-      left: 15px;
-      right: 15px;
-      margin: 0;
-    }
-    
-    .filter-control-area.panel-open {
-      left: calc(15px + var(--panel-width));
-    }
-
-    .filter-toggle-btn {
-      width: var(--toggle-size);
-      height: var(--toggle-size);
-      border-radius: 50%;
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: var(--card-shadow);
-      transition: all 0.3s ease;
-      flex-shrink: 0;
-      z-index: 1001;
-      position: relative;
-    }
-    
-    .filter-toggle-btn:hover {
-      background-color: var(--secondary-color);
-      transform: scale(1.05);
-    }
-    
-    .filter-toggle-btn i {
-      font-size: 16px;
-    }
-    
-    .filter-label-container {
-      background-color: rgb(67, 161, 255);
-      border-radius: 20px;
-      padding: 5px 12px;
-      margin: 0 15px;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      gap: 8px;
-      flex-shrink: 0;
-      transition: all 0.2s ease;
-    }
-    
-    .filter-label-container:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .filter-label-text {
-      font-weight: 600;
-      color: white;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      user-select: none;
-      cursor: pointer;
-    }
-    
-    .applied-filters-strip {
-      flex: 1;
-      overflow: hidden;
-      background: transparent;
-      padding: 0;
-      margin: 0;
-      border: none;
-      box-shadow: none;
-      position: relative;
-      left: 0;
-      width: auto;
-      top: auto;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    
-    .applied-filters-container {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    
-    .applied-filters-title {
-      font-weight: 600;
-      color: #000000;
-      margin-right: 6px;
-      font-size: 0.85rem;
-      white-space: nowrap;
-    }
-    
-    .applied-filters-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      overflow: hidden;
-    }
-    
-    .applied-filter-item {
-      background-color: rgb(255, 255, 255);
-      border-radius: 12px;
-      border: 1px solid #36363628;
-      padding: 2px 6px;
-      font-size: 0.9rem;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-      display: flex;
-      align-items: center;
-      transition: transform 0.1s ease;
-    }
-    
-    .applied-filter-item:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08);
-    }
-    
-    .filter-key {
-      font-weight: 600;
-      color: #3a0ca3;
-      margin-right: 3px;
-    }
-    
-    .filter-value {
-      color: #4a5568;
-      font-weight: 500;
-    }
-    
-    .updated-date-container {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 4px;
-    }
-    
-    .date-display {
-      background-color: rgba(255, 255, 255, 0.95);
-      border-radius: 12px;
-      padding: 2px 6px;
-      font-size: 0.8rem;
-      border: 1px solid #36363628;
-      color: #4a5568;
-      font-weight: 600;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-      display: inline-flex;
-      align-items: center;
-      transition: transform 0.1s ease;
-    }
-    
-    .date-display:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08);
-    }
-
-    .filter-side-panel {
-      position: fixed;
-      top: 0;
-      left: calc(-1 * var(--panel-width));
-      width: var(--panel-width);
-      height: 100vh;
-      background-color: white;
-      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
-      z-index: 9999;
-      transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    .filter-side-panel.active {
-      left: 0;
-    }
-    
-    .filter-panel-header {
-      padding: 15px 20px;
-      background-color: var(--primary-color);
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .filter-panel-header h3 {
-      margin: 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-    
-    .filter-panel-actions {
-      padding: 15px;
-      background-color: var(--light-gray);
-      border-bottom: 1px solid #e9ecef;
-      z-index: 10;
-      display: flex;
-      gap: 10px;
-    }
-    
-    .filter-panel-actions .btn {
-      flex: 1;
-      margin-bottom: 0;
-      transition: all 0.2s ease;
-    }
-    
-    .filter-panel-actions .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .filter-panel-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 15px;
-      transition: all 0.3s ease;
-    }
-    
-    .filter-group {
-      margin-bottom: 20px;
-    }
-    
-    .filter-group .filter-col {
-      margin-bottom: 15px;
-    }
-    
-    .filter-section {
-      background: #ffffff;
-      border-radius: var(--border-radius);
-      box-shadow: var(--card-shadow);
-      padding: 20px;
-      margin-bottom: 15px;
-      transition: all 0.25s ease;
-    }
-    
-    .filter-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(var(--filter-col-min-width), 1fr));
-      gap: var(--filter-gap);
-      margin-bottom: var(--row-gap);
-      align-items: flex-end;
-    }
-    
-    .filter-col {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-    
-    .filter-label {
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--primary-color);
-      font-size: 0.85rem;
-    }
-    
-    input.form-control,
-    select.form-select {
-      height: 38px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      background-color: #ffffff;
-      font-size: 0.85rem;
-      font-weight: normal;
-      padding: 0 12px;
-      width: 100%;
-      transition: all 0.2s ease;
-    }
-    
-    input.form-control:focus,
-    select.form-select:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 0.15rem rgba(0,55,102,0.15);
-    }
-    
-    .input-with-icon {
-      position: relative;
-    }
-    
-    .input-with-icon .search-icon {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #9ca3af;
-      font-size: 0.8rem;
-    }
-    
-    .range-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    
-    .actions-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-    
-    .actions-row .half-width {
-      flex: 1 1 48%;
-    }
-    
-    .btn {
-      height: 38px;
-      border-radius: var(--border-radius);
-      font-weight: 500;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      padding: 0 14px;
-    }
-    
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    
-    .loading-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 15px;
-      min-height: 120px;
-    }
-
-    .loading-spinner {
-      border: 3px solid rgba(0, 0, 0, 0.1);
-      border-left-color: var(--primary-color);
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 10px;
-    }
-    
-    /* ===========================
-       Stats Grid - Updated with Metrics Styling
-    =========================== */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 22px;
-      margin-bottom: 32px;
-      transition: all 0.3s ease;
-    }
-
-   .stat-card {
-  position: relative;
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: var(--card-shadow);
-  height: 160px;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border-top: 5px solid #00f2ffff;
-}
-
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--card-hover-shadow);
-}
-
-.stat-card .card-body {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.metric-subcard-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-}
-
-.metric-subcard {
-  padding: 15px;
-  text-align: center;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(31, 30, 30, 0.1);
-  transition: background-color 0.2s;
-}
-
-.metric-subcard:hover {
-  background-color: #f8f9fa;
-}
-
-.metric-subcard:last-child {
-  border-bottom: none;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.stat-icon {
-  font-size: 24px;
-  color: #0000B8;
-}
-
-.stat-value {
-  font-weight: 700;
-  font-size: 28px;
-  margin: 5px 0;
-  color: #0000B8;
-}
-
-.stat-title {
-  font-size: 14px;
-  color: #000000;
-  margin: 0;
-  line-height: 1.3;
-  font-weight: 500;
-}
-
-.download-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: transparent;
-  color: #0000B8;
-  border: 1px solid #4361ee;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  font-size: 16px;
-  transition: all 0.2s ease;
-}
-
-.download-btn:hover {
-  background-color: #4361ee;
-  color: white;
-  transform: scale(1.05);
-}
-
-.download-btn i {
-  font-size: 14px;
-}
-
-/* Live Count Card Specific Styles */
-.live-card {
-  border-top: 5px solid var(--live-color) !important;
-}
-
-.live-card .stat-icon {
-  color: var(--live-color) !important;
-}
-
-.live-card .stat-value {
-  color: var(--live-color) !important;
-}
-
-.live-card .download-btn {
-  color: var(--live-color) !important;
-  border-color: var(--live-color) !important;
-}
-
-.live-card .download-btn:hover {
-  background-color: var(--live-color) !important;
-}
-
-/* Male Card Specific Styles */
-.male-card {
-  border-top: 5px solid var(--male-color) !important;
-}
-
-.male-card .stat-icon {
-  color: var(--male-color) !important;
-}
-
-.male-card .stat-value {
-  color: var(--male-color) !important;
-}
-
-.male-card .download-btn {
-  color: var(--male-color) !important;
-  border-color: var(--male-color) !important;
-}
-
-.male-card .download-btn:hover {
-  background-color: var(--male-color) !important;
-}
-
-/* Female Card Specific Styles */
-.female-card {
-  border-top: 5px solid var(--female-color) !important;
-}
-
-.female-card .stat-icon {
-  color: var(--female-color) !important;
-}
-
-.female-card .stat-value {
-  color: var(--female-color) !important;
-}
-
-.female-card .download-btn {
-  color: var(--female-color) !important;
-  border-color: var(--female-color) !important;
-}
-
-.female-card .download-btn:hover {
-  background-color: var(--female-color) !important;
-}
-
-/* Current Year Card Specific Styles */
-.current-year-card {
-  border-top: 5px solid var(--current-year-color) !important;
-}
-
-.current-year-card .stat-icon {
-  color: var(--current-year-color) !important;
-}
-
-.current-year-card .stat-value {
-  color: var(--current-year-color) !important;
-}
-
-.current-year-card .download-btn {
-  color: var(--current-year-color) !important;
-  border-color: var(--current-year-color) !important;
-}
-
-.current-year-card .download-btn:hover {
-  background-color: var(--current-year-color) !important;
-}
-
-    .data-table-container {
-      background-color: var(--card-bg);
-      border-radius: 14px;
-      box-shadow: var(--card-shadow);
-      padding: 30px;
-      overflow-x: auto;
-      margin-bottom: 30px;
-      display: none;
-      transition: all 0.3s ease;
-    }
-
-    .table {
-      width: 100%;
-      color: var(--dark-text);
-      border-collapse: collapse;
-    }
-
-    .table th {
-      font-weight: 600;
-      text-align: left;
-      padding: 12px 15px;
-      background: #f1f5f9;
-      border-bottom: 2px solid rgba(15, 23, 42, 0.1);
-    }
-
-    .table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid rgba(15, 23, 42, 0.05);
-    }
-
-    .table tr:hover td {
-      background: #f8fafc;
-    }
-
-    .toggle-raw-data {
-      margin-bottom: 20px;
-    }
-
-    /* Improved loading spinner styles */
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.1);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-
-    .loading-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .loading-spinner-container {
-      background-color: white;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .loading-spinner {
-      border: 3px solid rgba(0, 0, 0, 0.1);
-      border-left-color: var(--primary-color);
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 10px;
-    }
-
-    .loading-text {
-      font-size: 14px;
-      color: var(--dark-gray);
-      font-weight: 500;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Pagination styles */
-    .pagination-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-    }
-
-    .load-more-btn {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 8px 20px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .load-more-btn:hover {
-      background-color: var(--secondary-color);
-    }
-
-    .load-more-btn:disabled {
-      background-color: #a0aec0;
-      cursor: not-allowed;
-    }
-
-    @media (max-width: 768px) {
-      .dashboard-container {
-        padding: 15px;
-        padding-left: calc(15px + var(--navbar-width));
-        margin-top: 100px;
-      }
-      
-      .dashboard-title {
-        font-size: 1.8rem;
-      }
-
-      .filter-control-area {
-        top: 60px;
-        left: 0;
-        width: 100%;
-        padding-left: calc(var(--navbar-width) + 15px);
-      }
-
-      .filter-side-panel {
-        width: 100%;
-        left: 0;
-        top: 130px;
-        height: calc(100vh - 130px);
-      }
-
-      .stats-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .filter-row {
-        grid-template-columns: 1fr;
-      }
-      
-      .table {
-        font-size: 0.8rem;
-      }
-      
-      .table th, .table td {
-        padding: 8px 10px;
-      }
-      
-      .filter-panel-actions {
-        flex-direction: column;
-      }
-      
-      .filter-panel-actions .btn {
-        margin-bottom: 10px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .filter-actions {
-        flex-direction: column;
-      }
-      
-      .btn {
-        width: 100%;
-      }
-
-      .filter-label-container {
-        margin: 0 10px;
-      }
-
-      .applied-filters-strip {
-        display: none;
-      }
-    }
-  </style>
-</head>
-<body>
-  
-  {% include 'user/navbar.html' %}
-
-  <!-- Improved Loading Overlay -->
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-spinner-container">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Loading data...</div>
-    </div>
-  </div>
-
-  <!-- Filter Control Area -->
-  <div class="filter-control-area" id="filterControlArea">
-    <!-- Filter Toggle Button -->
-    <button class="filter-toggle-btn" id="filterToggleBtn" title="Toggle Filters">
-      <i class="fas fa-filter"></i>
-    </button>
-    
-    <!-- Filter Label Container (now clickable) -->
-    <div class="filter-label-container" id="filterLabelContainer">
-      <i class="fas fa-filter"></i>
-      <div class="filter-label-text">Choose Filter</div>
-    </div>
-    
-    <!-- Applied Filters Strip -->
-    <div class="applied-filters-strip" id="applied-filters">
-      <div class="applied-filters-container">
-        <span class="applied-filters-title">Applied Filters:</span>
-        <div class="applied-filters-list" id="appliedFiltersList"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Side Panel -->
-  <div class="filter-side-panel" id="filterSidePanel">
-    <div class="filter-panel-header">
-      <h3>Filter Options</h3>
-      <button type="button" class="btn-close btn-close-white" id="closeFilterBtn" aria-label="Close"></button>
-    </div>
-    
-    <div class="filter-panel-content">
-      <div class="filter-section">
-        <div class="filter-row">
-          <div class="filter-col">
-            <label class="filter-label">Gender</label>
-            <select class="form-control" id="filter-gender">
-              <option value="all">All</option>
-            </select>
-          </div>
-          <div class="filter-col">
-            <label class="filter-label">Academic Year</label>
-            <select class="form-control" id="filter-academic-year">
-              <option value="all">All Years</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="filter-row">
-          <div class="filter-col">
-            <label class="filter-label">JTA Batch</label>
-            <select class="form-control" id="filter-jta-batch">
-              <option value="all">All Batches</option>
-            </select>
-          </div>
-          <div class="filter-col">
-            <label class="filter-label">Trade</label>
-            <select class="form-control" id="filter-trade">
-              <option value="all">All Trades</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="filter-row">
-          <div class="filter-col">
-            <label class="filter-label">Final Result</label>
-            <select class="form-control" id="filter-final-result">
-              <option value="all">All Results</option>
-            </select>
-          </div>
-          <div class="filter-col">
-            <label class="filter-label">Training Name</label>
-            <select class="form-control" id="filter-training-name">
-              <option value="all">All Trainings</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="filter-row">
-          <div class="filter-col">
-            <label class="filter-label">Employee Category</label>
-            <select class="form-control" id="filter-employee-category">
-              <option value="all">All Categories</option>
-            </select>
-          </div>
-          <div class="filter-col">
-            <label class="filter-label">Status</label>
-            <select class="form-control" id="filter-status">
-              <option value="all">All Statuses</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="filter-row">
-          <div class="filter-col">
-            <label class="filter-label">Ticket Number</label>
-            <input type="text" class="form-control" id="filter-ticket" placeholder="Search ticket numbers">
-          </div>
-        </div>
-
-        <div class="filter-row">
-          <div class="filter-col">
-            <label class="filter-label">Date Range</label>
-            <input type="date" class="form-control" id="filter-start-date" placeholder="Start Date">
-          </div>
-          <div class="filter-col">
-            <label class="filter-label">&nbsp;</label>
-            <input type="date" class="form-control" id="filter-end-date" placeholder="End Date">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="filter-panel-actions">
-      <button class="btn btn-primary" id="apply-filters">
-        <i class="bi bi-funnel"></i> Apply Filters
-      </button>
-      <button class="btn btn-secondary" id="reset-filters">
-        <i class="bi bi-arrow-counterclockwise"></i> Reset
-      </button>
-    </div>
-  </div>
-
-  <div class="dashboard-container">
-    <div class="stats-grid">
-      <!-- Live Count Card -->
-      <div class="stat-card live-card">
-        <div class="card-body">
-          <div class="metric-subcard-container">
-            <div class="metric-subcard">
-              <div class="card-header">
-                <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
-                <button class="btn btn-sm download-btn" id="download-live-btn" title="Download Live Report">
-                  <i class="bi bi-download"></i>
-                </button>
-              </div>
-              <div class="stat-title">Live Count</div>
-              <div class="stat-value" id="stat-live">0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Male Count Card -->
-      <div class="stat-card male-card">
-        <div class="card-body">
-          <div class="metric-subcard-container">
-            <div class="metric-subcard">
-              <div class="card-header">
-                <div class="stat-icon"><i class="bi bi-gender-male"></i></div>
-                <button class="btn btn-sm download-btn" id="download-male-btn" title="Download Male Report">
-                  <i class="bi bi-download"></i>
-                </button>
-              </div>
-              <div class="stat-title">Male Count</div>
-              <div class="stat-value" id="stat-male">0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Female Count Card -->
-      <div class="stat-card female-card">
-        <div class="card-body">
-          <div class="metric-subcard-container">
-            <div class="metric-subcard">
-              <div class="card-header">
-                <div class="stat-icon"><i class="bi bi-gender-female"></i></div>
-                <button class="btn btn-sm download-btn" id="download-female-btn" title="Download Female Report">
-                  <i class="bi bi-download"></i>
-                </button>
-              </div>
-              <div class="stat-title">Female Count</div>
-              <div class="stat-value" id="stat-female">0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Current Year Joining Card -->
-      <div class="stat-card current-year-card">
-        <div class="card-body">
-          <div class="metric-subcard-container">
-            <div class="metric-subcard">
-              <div class="card-header">
-                <div class="stat-icon"><i class="bi bi-calendar-event"></i></div>
-                <button class="btn btn-sm download-btn" id="download-current-year-btn" title="Download Current Year Report">
-                  <i class="bi bi-download"></i>
-                </button>
-              </div>
-              <div class="stat-title">Current Year Joining</div>
-              <div class="stat-value" id="stat-current-year">0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="toggle-raw-data form-check form-switch">
-      <input class="form-check-input" type="checkbox" id="show-raw-data">
-      <label class="form-check-label" for="show-raw-data">Show Raw Data</label>
-    </div>
-
-    <div class="data-table-container" id="raw-data-container">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Sr No</th>
-            <th>Ticket No</th>
-            <th>Name</th>
-            <th>Gender</th>
-            <th>Academic Year</th>
-            <th>Date of Joining</th>
-            <th>JTA Batch</th>
-            <th>Date of Separation</th>
-            <th>Trade</th>
-            <th>Final Result</th>
-            <th>Training Name</th>
-            <th>Employee Category</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="raw-data-body">
-          <!-- Data will be populated here -->
-        </tbody>
-      </table>
-      <div class="pagination-container">
-        <button class="load-more-btn" id="load-more-btn">Load More</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Include necessary scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // DOM Elements
-      const filterToggleBtn = document.getElementById('filterToggleBtn');
-      const filterLabelContainer = document.getElementById('filterLabelContainer');
-      const filterSidePanel = document.getElementById('filterSidePanel');
-      const filterControlArea = document.getElementById('filterControlArea');
-      const closeFilterBtn = document.getElementById('closeFilterBtn');
-      const applyFiltersBtn = document.getElementById('apply-filters');
-      const resetFiltersBtn = document.getElementById('reset-filters');
-      const showRawDataToggle = document.getElementById('show-raw-data');
-      const rawDataContainer = document.getElementById('raw-data-container');
-      const rawDataBody = document.getElementById('raw-data-body');
-      const appliedFiltersStrip = document.getElementById('applied-filters');
-      const appliedFiltersList = document.getElementById('appliedFiltersList');
-      const loadingOverlay = document.getElementById('loadingOverlay');
-      const loadMoreBtn = document.getElementById('load-more-btn');
-      const downloadLiveBtn = document.getElementById('download-live-btn');
-      const downloadMaleBtn = document.getElementById('download-male-btn');
-      const downloadFemaleBtn = document.getElementById('download-female-btn');
-      const downloadCurrentYearBtn = document.getElementById('download-current-year-btn');
-      
-      // Filter elements
-      const filterGender = document.getElementById('filter-gender');
-      const filterAcademicYear = document.getElementById('filter-academic-year');
-      const filterJtaBatch = document.getElementById('filter-jta-batch');
-      const filterTrade = document.getElementById('filter-trade');
-      const filterFinalResult = document.getElementById('filter-final-result');
-      const filterTrainingName = document.getElementById('filter-training-name');
-      const filterEmployeeCategory = document.getElementById('filter-employee-category');
-      const filterStatus = document.getElementById('filter-status');
-      const filterTicket = document.getElementById('filter-ticket');
-      const filterStartDate = document.getElementById('filter-start-date');
-      const filterEndDate = document.getElementById('filter-end-date');
-      
-      // Stat elements
-      const statLive = document.getElementById('stat-live');
-      const statMale = document.getElementById('stat-male');
-      const statFemale = document.getElementById('stat-female');
-      const statCurrentYear = document.getElementById('stat-current-year');
-
-      // Pagination variables
-      let currentPage = 0;
-      const pageSize = 50;
-      let totalRecords = 0;
-      let isLoading = false;
-      let isInitialized = false;
-      let currentAcademicYear = '';
-
-      // Initialize date pickers
-      flatpickr("#filter-start-date", {
-        dateFormat: "Y-m-d",
-        maxDate: new Date()
-      });
-      
-      flatpickr("#filter-end-date", {
-        dateFormat: "Y-m-d",
-        maxDate: new Date()
-      });
-
-      // Toggle filter panel
-      filterToggleBtn.addEventListener('click', toggleFilterPanel);
-      filterLabelContainer.addEventListener('click', toggleFilterPanel);
-      closeFilterBtn.addEventListener('click', toggleFilterPanel);
-      
-      function toggleFilterPanel() {
-        filterSidePanel.classList.toggle('active');
-        filterControlArea.classList.toggle('panel-open');
-      }
-
-      // Close filter panel when clicking outside
-      document.addEventListener('click', function(event) {
-        if (
-          !filterSidePanel.contains(event.target) &&
-          !filterToggleBtn.contains(event.target) &&
-          !filterLabelContainer.contains(event.target) &&
-          filterSidePanel.classList.contains('active')
-        ) {
-          filterSidePanel.classList.remove('active');
-          filterControlArea.classList.remove('panel-open');
-        }
-      });
-
-      // Set current year as default filter
-      function setCurrentYearAsDefault() {
-        const currentYear = new Date().getFullYear();
-        currentAcademicYear = `${currentYear}/${String(currentYear+1).slice(-2)}`;
-        filterAcademicYear.value = currentAcademicYear;
-      }
-
-      // Improved loading functions
-      function showLoading() {
-        loadingOverlay.classList.add('active');
-      }
-      
-      function hideLoading() {
-        loadingOverlay.classList.remove('active');
-      }
-
-      // Fetch filter options from database
-      function fetchFilterOptions() {
-        // Only show loading spinner on initial load
-        if (!isInitialized) {
-          showLoading();
-        }
-        
-        fetch('/user_tech/api/jta/filter-options')
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.json();
-          })
-          .then(data => {
-            console.log('Filter options data:', data); // Debug: log the response
+from flask import Blueprint, render_template, request, jsonify, send_file
+from utils import get_db_connection
+import json
+import pandas as pd
+from io import BytesIO
+
+# Blueprint definition
+user_tech_bp = Blueprint('user_tech_bp', __name__, url_prefix='/user_tech')
+
+# Induction Main Page
+@user_tech_bp.route('/induction', methods=['GET'])
+def induction_list():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            sql = "SELECT * FROM induction ORDER BY sr_no DESC"
+            cursor.execute(sql)
+            induction_data = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching induction data: {e}")
+        induction_data = []
+    finally:
+        conn.close()
+
+    return render_template("user/induction.html", induction_data=induction_data)
+
+# Induction Filter Options API
+@user_tech_bp.route('/api/induction/filter-options', methods=['GET'])
+def get_filter_options():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Get unique values for each filter
+            cursor.execute("SELECT DISTINCT plant_location FROM induction WHERE plant_location IS NOT NULL ORDER BY plant_location")
+            plants = [row['plant_location'] for row in cursor.fetchall()]
             
-            // Populate gender options
-            filterGender.innerHTML = '<option value="all">All</option>';
-            data.genders.forEach(gender => {
-              const option = document.createElement('option');
-              option.value = gender;
-              option.textContent = gender;
-              filterGender.appendChild(option);
-            });
+            cursor.execute("SELECT DISTINCT batch_number FROM induction WHERE batch_number IS NOT NULL ORDER BY batch_number")
+            batches = [row['batch_number'] for row in cursor.fetchall()]
             
-            // Populate academic year options
-            filterAcademicYear.innerHTML = '<option value="all">All Years</option>';
-            console.log('Academic years:', data.academic_years); // Debug: log academic years
-            if (data.academic_years && data.academic_years.length > 0) {
-              data.academic_years.forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                filterAcademicYear.appendChild(option);
-              });
-            } else {
-              // If no academic years are returned, add a default message
-              const option = document.createElement('option');
-              option.value = "no-data";
-              option.textContent = "No academic years available";
-              option.disabled = true;
-              filterAcademicYear.appendChild(option);
+            cursor.execute("SELECT DISTINCT learning_hours FROM induction WHERE learning_hours IS NOT NULL ORDER BY learning_hours")
+            learning_hours = [str(int(row['learning_hours'])) for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT gender FROM induction WHERE gender IS NOT NULL ORDER BY gender")
+            genders = [row['gender'] for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT employee_category FROM induction WHERE employee_category IS NOT NULL ORDER BY employee_category")
+            categories = [row['employee_category'] for row in cursor.fetchall()]
+            
+            # Get distinct academic years from joined_year
+            cursor.execute("SELECT DISTINCT joined_year FROM induction WHERE joined_year IS NOT NULL ORDER BY joined_year")
+            academic_years = []
+            for row in cursor.fetchall():
+                year = row['joined_year']
+                # Format as "YYYY/YY"
+                formatted_year = f"{int(year)}/{str(int(year)+1)[2:]}"
+                academic_years.append(formatted_year)
+            
+            # Get distinct faculty names
+            cursor.execute("SELECT DISTINCT faculty_name FROM induction WHERE faculty_name IS NOT NULL ORDER BY faculty_name")
+            faculties = [row['faculty_name'] for row in cursor.fetchall()]
+            
+            # Get distinct shifts
+            cursor.execute("SELECT DISTINCT shift FROM induction WHERE shift IS NOT NULL ORDER BY shift")
+            shifts = [row['shift'] for row in cursor.fetchall()]
+            
+        return jsonify({
+            'plants': plants,
+            'batches': batches,
+            'learning_hours': learning_hours,
+            'genders': genders,
+            'categories': categories,
+            'academic_years': academic_years,
+            'faculties': faculties,
+            'shifts': shifts
+        })
+    except Exception as e:
+        print(f"Error fetching filter options: {e}")
+        return jsonify({
+            'plants': [],
+            'batches': [],
+            'learning_hours': [],
+            'genders': [],
+            'categories': [],
+            'academic_years': [],
+            'faculties': [],
+            'shifts': []
+        }), 500
+    finally:
+        conn.close()
+
+# Induction Data API
+@user_tech_bp.route('/api/induction/data', methods=['GET'])
+def get_induction_data():
+    try:
+        # Get filter parameters from request
+        plant = request.args.get('plant', 'all')
+        batch = request.args.get('batch', 'all')
+        hours = request.args.get('hours', 'all')
+        gender = request.args.get('gender', 'all')
+        category = request.args.get('category', 'all')
+        academic_year = request.args.get('academic_year', 'all')
+        faculty = request.args.get('faculty', 'all')
+        shift = request.args.get('shift', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
+        
+        # Pagination parameters
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+        
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if plant != 'all':
+                where_conditions.append("plant_location = %s")
+                params.append(plant)
+            
+            if batch != 'all':
+                where_conditions.append("batch_number = %s")
+                params.append(batch)
+            
+            if hours != 'all':
+                where_conditions.append("learning_hours = %s")
+                params.append(float(hours))
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            if category != 'all':
+                where_conditions.append("employee_category = %s")
+                params.append(category)
+            
+            # Handle academic year filter
+            if academic_year != 'all':
+                # Extract the base year from the formatted academic year (e.g., "2023/24" -> 2023)
+                base_year = academic_year.split('/')[0]
+                where_conditions.append("joined_year = %s")
+                params.append(base_year)
+            
+            if faculty != 'all':
+                where_conditions.append("faculty_name = %s")
+                params.append(faculty)
+            
+            if shift != 'all':
+                where_conditions.append("shift = %s")
+                params.append(shift)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_from >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_to <= %s")
+                params.append(end_date)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM induction WHERE {where_clause} ORDER BY sr_no DESC LIMIT {limit} OFFSET {offset}"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Get total count for pagination
+            count_sql = f"SELECT COUNT(*) as total FROM induction WHERE {where_clause}"
+            cursor.execute(count_sql, params)
+            total_count = cursor.fetchone()['total']
+            
+            # Calculate statistics - Updated to include male and female counts
+            stats_sql = f"""
+                SELECT 
+                    COUNT(DISTINCT batch_number) as batch_count,
+                    COUNT(*) as coverage_count,
+                    COALESCE(SUM(learning_hours), 0) as learning_hours,
+                    COUNT(CASE WHEN gender = 'Male' THEN 1 END) as male_count,
+                    COUNT(CASE WHEN gender = 'Female' THEN 1 END) as female_count
+                FROM induction 
+                WHERE {where_clause}
+            """
+            cursor.execute(stats_sql, params)
+            stats = cursor.fetchone()
+            
+        # Convert records to list of dictionaries for JSON serialization
+        records_list = []
+        for record in records:
+            # Format academic year for display
+            academic_year_display = ""
+            if record['joined_year']:
+                academic_year_display = f"{int(record['joined_year'])}/{str(int(record['joined_year'])+1)[2:]}"
+            
+            records_list.append({
+                'sr_no': record['sr_no'],
+                'ticket_no': record['ticket_no'],
+                'name': record['name'],
+                'gender': record['gender'],
+                'employee_category': record['employee_category'],
+                'plant_location': record['plant_location'],
+                'academic_year': academic_year_display,
+                'date_from': record['date_from'].strftime('%Y-%m-%d') if record['date_from'] else '',
+                'date_to': record['date_to'].strftime('%Y-%m-%d') if record['date_to'] else '',
+                'shift': record['shift'],
+                'learning_hours': int(record['learning_hours']) if record['learning_hours'] else 0,
+                'training_name': record['training_name'],
+                'batch_number': record['batch_number'],
+                'training_venue_name': record['training_venue_name'],
+                'faculty_name': record['faculty_name'],
+                'subject_name': record['subject_name'],
+                'remark': record['remark']
+            })
+        
+        return jsonify({
+            'records': records_list,
+            'stats': {
+                'batch_count': stats['batch_count'] if stats else 0,
+                'coverage_count': stats['coverage_count'] if stats else 0,
+                'learning_hours': int(stats['learning_hours']) if stats else 0,
+                'male_count': stats['male_count'] if stats else 0,
+                'female_count': stats['female_count'] if stats else 0
+            },
+            'total_records': total_count
+        })
+        
+    except Exception as e:
+        print(f"Error fetching induction data: {e}")
+        return jsonify({
+            'records': [],
+            'stats': {
+                'batch_count': 0,
+                'coverage_count': 0,
+                'learning_hours': 0,
+                'male_count': 0,
+                'female_count': 0
+            },
+            'total_records': 0
+        }), 500
+    finally:
+        conn.close()
+
+# Induction Download Excel API
+@user_tech_bp.route('/api/induction/download', methods=['GET'])
+def download_induction_data():
+    try:
+        # Get filter parameters from request
+        plant = request.args.get('plant', 'all')
+        batch = request.args.get('batch', 'all')
+        hours = request.args.get('hours', 'all')
+        gender = request.args.get('gender', 'all')
+        category = request.args.get('category', 'all')
+        academic_year = request.args.get('academic_year', 'all')
+        faculty = request.args.get('faculty', 'all')
+        shift = request.args.get('shift', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
+        
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if plant != 'all':
+                where_conditions.append("plant_location = %s")
+                params.append(plant)
+            
+            if batch != 'all':
+                where_conditions.append("batch_number = %s")
+                params.append(batch)
+            
+            if hours != 'all':
+                where_conditions.append("learning_hours = %s")
+                params.append(float(hours))
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            if category != 'all':
+                where_conditions.append("employee_category = %s")
+                params.append(category)
+            
+            # Handle academic year filter
+            if academic_year != 'all':
+                base_year = academic_year.split('/')[0]
+                where_conditions.append("joined_year = %s")
+                params.append(base_year)
+            
+            if faculty != 'all':
+                where_conditions.append("faculty_name = %s")
+                params.append(faculty)
+            
+            if shift != 'all':
+                where_conditions.append("shift = %s")
+                params.append(shift)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_from >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_to <= %s")
+                params.append(end_date)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM induction WHERE {where_clause} ORDER BY sr_no DESC"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Convert records to DataFrame
+            df = pd.DataFrame(records)
+            
+            # Rename columns to proper names
+            column_mapping = {
+                'sr_no': 'Sr No',
+                'ticket_no': 'Ticket No',
+                'name': 'Name',
+                'gender': 'Gender',
+                'employee_category': 'Employee Category',
+                'plant_location': 'Plant Location',
+                'date_from': 'Date From',
+                'date_to': 'Date To',
+                'shift': 'Shift',
+                'learning_hours': 'Learning Hours',
+                'training_name': 'Training Name',
+                'batch_number': 'Batch Number',
+                'training_venue_name': 'Training Venue Name',
+                'faculty_name': 'Faculty Name',
+                'subject_name': 'Subject Name',
+                'remark': 'Remark'
             }
             
-            // Populate JTA batch options
-            filterJtaBatch.innerHTML = '<option value="all">All Batches</option>';
-            data.jta_batches.forEach(batch => {
-              const option = document.createElement('option');
-              option.value = batch;
-              option.textContent = batch;
-              filterJtaBatch.appendChild(option);
-            });
+            # Rename the columns
+            df = df.rename(columns=column_mapping)
             
-            // Populate trade options
-            filterTrade.innerHTML = '<option value="all">All Trades</option>';
-            data.trades.forEach(trade => {
-              const option = document.createElement('option');
-              option.value = trade;
-              option.textContent = trade;
-              filterTrade.appendChild(option);
-            });
+            # Create Academic Year column from joined_year and format it
+            if 'joined_year' in df.columns:
+                df['Academic Year'] = df['joined_year'].apply(
+                    lambda x: f"{int(x)}/{str(int(x)+1)[2:]}" if pd.notnull(x) else ''
+                )
+                # Drop the original joined_year column
+                df = df.drop(columns=['joined_year'])
             
-            // Populate final result options
-            filterFinalResult.innerHTML = '<option value="all">All Results</option>';
-            data.final_results.forEach(result => {
-              const option = document.createElement('option');
-              option.value = result;
-              option.textContent = result;
-              filterFinalResult.appendChild(option);
-            });
+            # Format dates
+            date_columns = ['Date From', 'Date To']
+            for col in date_columns:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col]).dt.strftime('%Y-%m-%d')
             
-            // Populate training name options
-            filterTrainingName.innerHTML = '<option value="all">All Trainings</option>';
-            data.training_names.forEach(training => {
-              const option = document.createElement('option');
-              option.value = training;
-              option.textContent = training;
-              filterTrainingName.appendChild(option);
-            });
+            # Convert learning_hours to int
+            if 'Learning Hours' in df.columns:
+                df['Learning Hours'] = df['Learning Hours'].apply(
+                    lambda x: int(x) if pd.notnull(x) else 0
+                )
             
-            // Populate employee category options
-            filterEmployeeCategory.innerHTML = '<option value="all">All Categories</option>';
-            data.employee_categories.forEach(category => {
-              const option = document.createElement('option');
-              option.value = category;
-              option.textContent = category;
-              filterEmployeeCategory.appendChild(option);
-            });
+            # Reorder columns to match the desired order
+            desired_columns = [
+                'Sr No', 'Ticket No', 'Name', 'Gender', 'Employee Category', 
+                'Plant Location', 'Academic Year', 'Date From', 
+                'Date To', 'Shift', 'Learning Hours', 'Training Name', 
+                'Batch Number', 'Training Venue Name', 'Faculty Name', 
+                'Subject Name', 'Remark'
+            ]
             
-            // Populate status options
-            filterStatus.innerHTML = '<option value="all">All Statuses</option>';
-            data.statuses.forEach(status => {
-              const option = document.createElement('option');
-              option.value = status;
-              option.textContent = status;
-              filterStatus.appendChild(option);
-            });
+            # Filter to only include columns that exist in the dataframe
+            columns_to_use = [col for col in desired_columns if col in df.columns]
+            df = df[columns_to_use]
             
-            // Set current year as default and load initial data
-            setCurrentYearAsDefault();
-            fetchJtaData();
-            fetchAllStatsData(); // Fetch all stats data separately
+            # Create an Excel file in memory
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name='Induction Data')
+                
+                # Adjust column widths for better readability
+                worksheet = writer.sheets['Induction Data']
+                for idx, col in enumerate(df.columns):
+                    # Set column width based on content length
+                    max_length = max(
+                        df[col].astype(str).apply(len).max(),
+                        len(col)
+                    ) + 2  # Add some padding
+                    worksheet.column_dimensions[chr(65 + idx)].width = min(max_length, 50)  # Cap width at 50
             
-            // Mark as initialized
-            isInitialized = true;
-          })
-          .catch(error => {
-            console.error('Error fetching filter options:', error);
-            alert('Error loading filter options. Please try again later.');
-            hideLoading();
-          });
-      }
+            output.seek(0)
+            
+            # Return the Excel file as a response
+            return send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name='induction_data.xlsx'
+            )
+            
+    except Exception as e:
+        print(f"Error generating Excel file: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
-      // Fetch all stats data (live count, male count, female count) without any filters
-      function fetchAllStatsData() {
-        fetchLiveCountData();
-        fetchMaleCountData();
-        fetchFemaleCountData();
-      }
+# FST Main Page
+@user_tech_bp.route('/fst', methods=['GET'])
+def fst_list():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            sql = "SELECT * FROM fst ORDER BY sr_no DESC"
+            cursor.execute(sql)
+            fst_data = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching FST data: {e}")
+        fst_data = []
+    finally:
+        conn.close()
 
-      // Fetch live count data (status = 'Active' without any other filters)
-      function fetchLiveCountData() {
-        const filters = {
-          status: 'Active',
-          limit: 1,
-          offset: 0
-        };
+    return render_template("user/fst.html", fst_data=fst_data)
+
+# FST Filter Options API
+@user_tech_bp.route('/api/fst/filter-options', methods=['GET'])
+def get_fst_filter_options():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Get unique values for each filter
+            cursor.execute("SELECT DISTINCT plant_location FROM fst WHERE plant_location IS NOT NULL ORDER BY plant_location")
+            plants = [row['plant_location'] for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT batch_number FROM fst WHERE batch_number IS NOT NULL ORDER BY batch_number")
+            batches = [row['batch_number'] for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT learning_hours FROM fst WHERE learning_hours IS NOT NULL ORDER BY learning_hours")
+            learning_hours = [str(row['learning_hours']) for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT gender FROM fst WHERE gender IS NOT NULL ORDER BY gender")
+            genders = [row['gender'] for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT employee_category FROM fst WHERE employee_category IS NOT NULL ORDER BY employee_category")
+            categories = [row['employee_category'] for row in cursor.fetchall()]
+            
+            # Get distinct academic years from joined_year
+            cursor.execute("SELECT DISTINCT joined_year FROM fst WHERE joined_year IS NOT NULL ORDER BY joined_year")
+            academic_years = []
+            for row in cursor.fetchall():
+                year = row['joined_year']
+                # Format as "YYYY/YY"
+                formatted_year = f"{int(year)}/{str(int(year)+1)[2:]}"
+                academic_years.append(formatted_year)
+            
+            # Get distinct faculty names
+            cursor.execute("SELECT DISTINCT faculty_name FROM fst WHERE faculty_name IS NOT NULL ORDER BY faculty_name")
+            faculties = [row['faculty_name'] for row in cursor.fetchall()]
+            
+            # Get distinct shifts
+            cursor.execute("SELECT DISTINCT shift FROM fst WHERE shift IS NOT NULL ORDER BY shift")
+            shifts = [row['shift'] for row in cursor.fetchall()]
+            
+            # Get distinct FST cell names
+            cursor.execute("SELECT DISTINCT fst_cell_name FROM fst WHERE fst_cell_name IS NOT NULL ORDER BY fst_cell_name")
+            fst_cells = [row['fst_cell_name'] for row in cursor.fetchall()]
+            
+        return jsonify({
+            'plants': plants,
+            'batches': batches,
+            'learning_hours': learning_hours,
+            'genders': genders,
+            'categories': categories,
+            'academic_years': academic_years,
+            'faculties': faculties,
+            'shifts': shifts,
+            'fst_cells': fst_cells
+        })
+    except Exception as e:
+        print(f"Error fetching FST filter options: {e}")
+        return jsonify({
+            'plants': [],
+            'batches': [],
+            'learning_hours': [],
+            'genders': [],
+            'categories': [],
+            'academic_years': [],
+            'faculties': [],
+            'shifts': [],
+            'fst_cells': []
+        }), 500
+    finally:
+        conn.close()
+
+# FST Data API
+@user_tech_bp.route('/api/fst/data', methods=['GET'])
+def get_fst_data():
+    try:
+        # Get filter parameters from request
+        plant = request.args.get('plant', 'all')
+        batch = request.args.get('batch', 'all')
+        hours = request.args.get('hours', 'all')
+        gender = request.args.get('gender', 'all')
+        category = request.args.get('category', 'all')
+        academic_year = request.args.get('academic_year', 'all')
+        faculty = request.args.get('faculty', 'all')
+        shift = request.args.get('shift', 'all')
+        fst_cell = request.args.get('fst_cell', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
         
-        const queryString = new URLSearchParams();
-        for (const key in filters) {
-          queryString.append(key, filters[key]);
-        }
+        # Pagination parameters
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
         
-        fetch(`/user_tech/api/jta/data?${queryString.toString()}`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if plant != 'all':
+                where_conditions.append("plant_location = %s")
+                params.append(plant)
+            
+            if batch != 'all':
+                where_conditions.append("batch_number = %s")
+                params.append(batch)
+            
+            if hours != 'all':
+                where_conditions.append("learning_hours = %s")
+                params.append(hours)
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            if category != 'all':
+                where_conditions.append("employee_category = %s")
+                params.append(category)
+            
+            # Handle academic year filter
+            if academic_year != 'all':
+                # Extract the base year from the formatted academic year (e.g., "2023/24" -> 2023)
+                base_year = academic_year.split('/')[0]
+                where_conditions.append("joined_year = %s")
+                params.append(base_year)
+            
+            if faculty != 'all':
+                where_conditions.append("faculty_name = %s")
+                params.append(faculty)
+            
+            if shift != 'all':
+                where_conditions.append("shift = %s")
+                params.append(shift)
+            
+            if fst_cell != 'all':
+                where_conditions.append("fst_cell_name = %s")
+                params.append(fst_cell)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_from >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_to <= %s")
+                params.append(end_date)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM fst WHERE {where_clause} ORDER BY sr_no DESC LIMIT {limit} OFFSET {offset}"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Get total count for pagination
+            count_sql = f"SELECT COUNT(*) as total FROM fst WHERE {where_clause}"
+            cursor.execute(count_sql, params)
+            total_count = cursor.fetchone()['total']
+            
+            # Calculate statistics - Updated to include male and female counts
+            stats_sql = f"""
+                SELECT 
+                    COUNT(DISTINCT batch_number) as batch_count,
+                    COUNT(*) as coverage_count,
+                    COALESCE(SUM(CAST(learning_hours AS SIGNED)), 0) as learning_hours,
+                    COUNT(CASE WHEN gender = 'Male' THEN 1 END) as male_count,
+                    COUNT(CASE WHEN gender = 'Female' THEN 1 END) as female_count
+                FROM fst 
+                WHERE {where_clause}
+            """
+            cursor.execute(stats_sql, params)
+            stats = cursor.fetchone()
+            
+        # Convert records to list of dictionaries for JSON serialization
+        records_list = []
+        for record in records:
+            # Format academic year for display
+            academic_year_display = ""
+            if record['joined_year']:
+                academic_year_display = f"{int(record['joined_year'])}/{str(int(record['joined_year'])+1)[2:]}"
+            
+            records_list.append({
+                'sr_no': record['sr_no'],
+                'ticket_no': record['ticket_no'],
+                'name': record['name'],
+                'gender': record['gender'],
+                'employee_category': record['employee_category'],
+                'plant_location': record['plant_location'],
+                'academic_year': academic_year_display,
+                'date_from': record['date_from'].strftime('%Y-%m-%d') if record['date_from'] else '',
+                'date_to': record['date_to'].strftime('%Y-%m-%d') if record['date_to'] else '',
+                'shift': record['shift'],
+                'learning_hours': record['learning_hours'],
+                'training_name': record['training_name'],
+                'batch_number': record['batch_number'],
+                'training_venue_name': record['training_venue_name'],
+                'faculty_name': record['faculty_name'],
+                'fst_cell_name': record['fst_cell_name'],
+                'remark': record['remark']
+            })
+        
+        return jsonify({
+            'records': records_list,
+            'stats': {
+                'batch_count': stats['batch_count'] if stats else 0,
+                'coverage_count': stats['coverage_count'] if stats else 0,
+                'learning_hours': int(stats['learning_hours']) if stats else 0,
+                'male_count': stats['male_count'] if stats else 0,
+                'female_count': stats['female_count'] if stats else 0
+            },
+            'total_records': total_count
+        })
+        
+    except Exception as e:
+        print(f"Error fetching FST data: {e}")
+        return jsonify({
+            'records': [],
+            'stats': {
+                'batch_count': 0,
+                'coverage_count': 0,
+                'learning_hours': 0,
+                'male_count': 0,
+                'female_count': 0
+            },
+            'total_records': 0
+        }), 500
+    finally:
+        conn.close()
+
+# FST Download Excel API
+@user_tech_bp.route('/api/fst/download', methods=['GET'])
+def download_fst_data():
+    try:
+        # Get filter parameters from request
+        plant = request.args.get('plant', 'all')
+        batch = request.args.get('batch', 'all')
+        hours = request.args.get('hours', 'all')
+        gender = request.args.get('gender', 'all')
+        category = request.args.get('category', 'all')
+        academic_year = request.args.get('academic_year', 'all')
+        faculty = request.args.get('faculty', 'all')
+        shift = request.args.get('shift', 'all')
+        fst_cell = request.args.get('fst_cell', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
+        
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if plant != 'all':
+                where_conditions.append("plant_location = %s")
+                params.append(plant)
+            
+            if batch != 'all':
+                where_conditions.append("batch_number = %s")
+                params.append(batch)
+            
+            if hours != 'all':
+                where_conditions.append("learning_hours = %s")
+                params.append(hours)
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            if category != 'all':
+                where_conditions.append("employee_category = %s")
+                params.append(category)
+            
+            # Handle academic year filter
+            if academic_year != 'all':
+                base_year = academic_year.split('/')[0]
+                where_conditions.append("joined_year = %s")
+                params.append(base_year)
+            
+            if faculty != 'all':
+                where_conditions.append("faculty_name = %s")
+                params.append(faculty)
+            
+            if shift != 'all':
+                where_conditions.append("shift = %s")
+                params.append(shift)
+            
+            if fst_cell != 'all':
+                where_conditions.append("fst_cell_name = %s")
+                params.append(fst_cell)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_from >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_to <= %s")
+                params.append(end_date)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM fst WHERE {where_clause} ORDER BY sr_no DESC"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Convert records to DataFrame
+            df = pd.DataFrame(records)
+            
+            # Rename columns to proper names
+            column_mapping = {
+                'sr_no': 'Sr No',
+                'ticket_no': 'Ticket No',
+                'name': 'Name',
+                'gender': 'Gender',
+                'employee_category': 'Employee Category',
+                'plant_location': 'Plant Location',
+                'date_from': 'Date From',
+                'date_to': 'Date To',
+                'shift': 'Shift',
+                'learning_hours': 'Learning Hours',
+                'training_name': 'Training Name',
+                'batch_number': 'Batch Number',
+                'training_venue_name': 'Training Venue Name',
+                'faculty_name': 'Faculty Name',
+                'fst_cell_name': 'FST Cell Name',
+                'remark': 'Remark'
             }
-            return response.json();
-          })
-          .then(data => {
-            statLive.textContent = data.stats.live_count;
-          })
-          .catch(error => {
-            console.error('Error fetching live count data:', error);
-            statLive.textContent = '0';
-          });
-      }
-
-      // Fetch male count data (gender = 'Male' AND status = 'Active' without any other filters)
-      function fetchMaleCountData() {
-        const filters = {
-          gender: 'Male',
-          status: 'Active',
-          limit: 1,
-          offset: 0
-        };
-        
-        const queryString = new URLSearchParams();
-        for (const key in filters) {
-          queryString.append(key, filters[key]);
-        }
-        
-        fetch(`/user_tech/api/jta/data?${queryString.toString()}`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.json();
-          })
-          .then(data => {
-            statMale.textContent = data.stats.male_count;
-          })
-          .catch(error => {
-            console.error('Error fetching male count data:', error);
-            statMale.textContent = '0';
-          });
-      }
-
-      // Fetch female count data (gender = 'Female' AND status = 'Active' without any other filters)
-      function fetchFemaleCountData() {
-        const filters = {
-          gender: 'Female',
-          status: 'Active',
-          limit: 1,
-          offset: 0
-        };
-        
-        const queryString = new URLSearchParams();
-        for (const key in filters) {
-          queryString.append(key, filters[key]);
-        }
-        
-        fetch(`/user_tech/api/jta/data?${queryString.toString()}`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.json();
-          })
-          .then(data => {
-            statFemale.textContent = data.stats.female_count;
-          })
-          .catch(error => {
-            console.error('Error fetching female count data:', error);
-            statFemale.textContent = '0';
-          });
-      }
-
-      // Fetch JTA data based on filters
-      function fetchJtaData(isLoadMore = false) {
-        if (isLoading) return;
-        
-        if (!isLoadMore) {
-          currentPage = 0;
-          rawDataBody.innerHTML = '';
-        }
-        
-        // Only show loading spinner if not initial load
-        if (isInitialized) {
-          showLoading();
-        }
-        
-        isLoading = true;
-        
-        // Build filter parameters
-        const filters = {
-          gender: filterGender.value,
-          academic_year: filterAcademicYear.value,
-          jta_batch: filterJtaBatch.value,
-          trade: filterTrade.value,
-          final_result: filterFinalResult.value,
-          training_name: filterTrainingName.value,
-          employee_category: filterEmployeeCategory.value,
-          status: filterStatus.value,
-          ticket: filterTicket.value,
-          startDate: filterStartDate.value,
-          endDate: filterEndDate.value,
-          limit: pageSize,
-          offset: currentPage * pageSize
-        };
-        
-        console.log('Applying filters:', filters); // Debug: log filters
-        
-        // Build query string
-        const queryString = new URLSearchParams();
-        for (const key in filters) {
-          if (filters[key] !== 'all' && filters[key] !== '') {
-            queryString.append(key, filters[key]);
-          }
-        }
-        
-        fetch(`/user_tech/api/jta/data?${queryString.toString()}`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.json();
-          })
-          .then(data => {
-            console.log('JTA data:', data); // Debug: log the response
             
-            // For current year joining count, we need to make a separate call
-            // if the current filter is not already set to the current year
-            if (filterAcademicYear.value !== currentAcademicYear) {
-              fetchCurrentYearData();
-            } else {
-              statCurrentYear.textContent = data.stats.coverage_count;
+            # Rename the columns
+            df = df.rename(columns=column_mapping)
+            
+            # Create Academic Year column from joined_year and format it
+            if 'joined_year' in df.columns:
+                df['Academic Year'] = df['joined_year'].apply(
+                    lambda x: f"{int(x)}/{str(int(x)+1)[2:]}" if pd.notnull(x) else ''
+                )
+                # Drop the original joined_year column
+                df = df.drop(columns=['joined_year'])
+            
+            # Format dates
+            date_columns = ['Date From', 'Date To']
+            for col in date_columns:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col]).dt.strftime('%Y-%m-%d')
+            
+            # Reorder columns to match the desired order
+            desired_columns = [
+                'Sr No', 'Ticket No', 'Name', 'Gender', 'Employee Category', 
+                'Plant Location', 'Academic Year', 'Date From', 
+                'Date To', 'Shift', 'Learning Hours', 'Training Name', 
+                'Batch Number', 'Training Venue Name', 'Faculty Name', 
+                'FST Cell Name', 'Remark'
+            ]
+            
+            # Filter to only include columns that exist in the dataframe
+            columns_to_use = [col for col in desired_columns if col in df.columns]
+            df = df[columns_to_use]
+            
+            # Create an Excel file in memory
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name='FST Data')
+                
+                # Adjust column widths for better readability
+                worksheet = writer.sheets['FST Data']
+                for idx, col in enumerate(df.columns):
+                    # Set column width based on content length
+                    max_length = max(
+                        df[col].astype(str).apply(len).max(),
+                        len(col)
+                    ) + 2  # Add some padding
+                    worksheet.column_dimensions[chr(65 + idx)].width = min(max_length, 50)  # Cap width at 50
+            
+            output.seek(0)
+            
+            # Return the Excel file as a response
+            return send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name='fst_data.xlsx'
+            )
+            
+    except Exception as e:
+        print(f"Error generating FST Excel file: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+# Pragati Main Page
+@user_tech_bp.route('/pragati', methods=['GET'])
+def pragati_list():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            sql = "SELECT * FROM pragati ORDER BY sr_no DESC"
+            cursor.execute(sql)
+            pragati_data = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching Pragati data: {e}")
+        pragati_data = []
+    finally:
+        conn.close()
+
+    return render_template("user/pragati.html", pragati_data=pragati_data)
+
+# Pragati Filter Options API
+@user_tech_bp.route('/api/pragati/filter-options', methods=['GET'])
+def get_pragati_filter_options():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Get unique values for each filter
+            cursor.execute("SELECT DISTINCT factory FROM pragati WHERE factory IS NOT NULL ORDER BY factory")
+            factories = [row['factory'] for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT pragati_batch_number FROM pragati WHERE pragati_batch_number IS NOT NULL ORDER BY pragati_batch_number")
+            batches = [row['pragati_batch_number'] for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT diploma_name FROM pragati WHERE diploma_name IS NOT NULL ORDER BY diploma_name")
+            diplomas = [row['diploma_name'] for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT gender FROM pragati WHERE gender IS NOT NULL ORDER BY gender")
+            genders = [row['gender'] for row in cursor.fetchall()]
+            
+            cursor.execute("SELECT DISTINCT employee_category FROM pragati WHERE employee_category IS NOT NULL ORDER BY employee_category")
+            categories = [row['employee_category'] for row in cursor.fetchall()]
+            
+            # Get distinct course joining years
+            cursor.execute("SELECT DISTINCT course_joining_year FROM pragati WHERE course_joining_year IS NOT NULL ORDER BY course_joining_year")
+            course_years = [row['course_joining_year'] for row in cursor.fetchall()]
+            
+            # Get distinct final results
+            cursor.execute("SELECT DISTINCT final_result FROM pragati WHERE final_result IS NOT NULL ORDER BY final_result")
+            final_results = [row['final_result'] for row in cursor.fetchall()]
+            
+            # Get distinct training names
+            cursor.execute("SELECT DISTINCT training_name FROM pragati WHERE training_name IS NOT NULL ORDER BY training_name")
+            trainings = [row['training_name'] for row in cursor.fetchall()]
+            
+        return jsonify({
+            'factories': factories,
+            'batches': batches,
+            'diplomas': diplomas,
+            'genders': genders,
+            'categories': categories,
+            'course_years': course_years,
+            'final_results': final_results,
+            'trainings': trainings
+        })
+    except Exception as e:
+        print(f"Error fetching Pragati filter options: {e}")
+        return jsonify({
+            'factories': [],
+            'batches': [],
+            'diplomas': [],
+            'genders': [],
+            'categories': [],
+            'course_years': [],
+            'final_results': [],
+            'trainings': []
+        }), 500
+    finally:
+        conn.close()
+
+# Pragati Data API
+@user_tech_bp.route('/api/pragati/data', methods=['GET'])
+def get_pragati_data():
+    try:
+        # Get filter parameters from request
+        factory = request.args.get('factory', 'all')
+        batch = request.args.get('batch', 'all')
+        diploma = request.args.get('diploma', 'all')
+        gender = request.args.get('gender', 'all')
+        category = request.args.get('category', 'all')
+        course_year = request.args.get('course_year', 'all')
+        final_result = request.args.get('final_result', 'all')
+        training = request.args.get('training', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
+        tab = request.args.get('tab', 'overall')
+        
+        # Pagination parameters
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+        
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if factory != 'all':
+                where_conditions.append("factory = %s")
+                params.append(factory)
+            
+            if batch != 'all':
+                where_conditions.append("pragati_batch_number = %s")
+                params.append(batch)
+            
+            if diploma != 'all':
+                where_conditions.append("diploma_name = %s")
+                params.append(diploma)
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            if category != 'all':
+                where_conditions.append("employee_category = %s")
+                params.append(category)
+            
+            if course_year != 'all':
+                where_conditions.append("course_joining_year = %s")
+                params.append(course_year)
+            
+            if final_result != 'all':
+                where_conditions.append("final_result = %s")
+                params.append(final_result)
+            
+            if training != 'all':
+                where_conditions.append("training_name = %s")
+                params.append(training)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_of_joining >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_of_joining <= %s")
+                params.append(end_date)
+            
+            # Add tab-specific conditions
+            current_year = datetime.datetime.now().year
+            previous_year = current_year - 1
+            
+            if tab == 'live':
+                # Students whose final result is not yet declared
+                where_conditions.append("(final_result IS NULL OR final_result = '')")
+            elif tab == 'first-year':
+                # Students in first year: 
+                # 1. Joined in current year (2025)
+                # 2. Joined in previous year (2024) but 1st year result not updated
+                where_conditions.append("((course_joining_year = %s) OR (course_joining_year = %s AND (first_year_result IS NULL OR first_year_result = '')))")
+                params.extend([current_year, previous_year])
+            elif tab == 'second-year':
+                # Students in second year:
+                # Joined in previous year (2024), 1st year result updated, but final result not updated
+                where_conditions.append("(course_joining_year = %s AND first_year_result IS NOT NULL AND first_year_result != '' AND (final_result IS NULL OR final_result = ''))")
+                params.append(previous_year)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM pragati WHERE {where_clause} ORDER BY sr_no DESC LIMIT {limit} OFFSET {offset}"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Get total count for pagination
+            count_sql = f"SELECT COUNT(*) as total FROM pragati WHERE {where_clause}"
+            cursor.execute(count_sql, params)
+            total_count = cursor.fetchone()['total']
+            
+            # Calculate statistics
+            stats_sql = f"""
+                SELECT 
+                    COUNT(DISTINCT pragati_batch_number) as batch_count,
+                    COUNT(*) as coverage_count,
+                    COUNT(CASE WHEN gender = 'Male' THEN 1 END) as male_count,
+                    COUNT(CASE WHEN gender = 'Female' THEN 1 END) as female_count,
+                    COUNT(CASE WHEN final_result = 'Pass' THEN 1 END) as pass_count,
+                    COUNT(CASE WHEN final_result = 'Fail' THEN 1 END) as fail_count
+                FROM pragati 
+                WHERE {where_clause}
+            """
+            cursor.execute(stats_sql, params)
+            stats = cursor.fetchone()
+            
+        # Convert records to list of dictionaries for JSON serialization
+        records_list = []
+        for record in records:
+            records_list.append({
+                'sr_no': record['sr_no'],
+                'ticket_no': record['ticket_no'],
+                'name': record['name'],
+                'gender': record['gender'],
+                'employee_category': record['employee_category'],
+                'factory': record['factory'],
+                'course_joining_year': record['course_joining_year'],
+                'date_of_joining': record['date_of_joining'].strftime('%Y-%m-%d') if record['date_of_joining'] else '',
+                'pragati_batch_number': record['pragati_batch_number'],
+                'diploma_name': record['diploma_name'],
+                'first_year_result': record['first_year_result'],
+                'second_year_result': record['second_year_result'],
+                'final_result': record['final_result'],
+                'training_name': record['training_name'],
+                'remark': record['remark']
+            })
+        
+        return jsonify({
+            'records': records_list,
+            'stats': {
+                'batch_count': stats['batch_count'] if stats else 0,
+                'coverage_count': stats['coverage_count'] if stats else 0,
+                'male_count': stats['male_count'] if stats else 0,
+                'female_count': stats['female_count'] if stats else 0,
+                'pass_count': stats['pass_count'] if stats else 0,
+                'fail_count': stats['fail_count'] if stats else 0
+            },
+            'total_records': total_count
+        })
+        
+    except Exception as e:
+        print(f"Error fetching Pragati data: {e}")
+        return jsonify({
+            'records': [],
+            'stats': {
+                'batch_count': 0,
+                'coverage_count': 0,
+                'male_count': 0,
+                'female_count': 0,
+                'pass_count': 0,
+                'fail_count': 0
+            },
+            'total_records': 0
+        }), 500
+    finally:
+        conn.close()
+
+# Pragati Download Excel API
+@user_tech_bp.route('/api/pragati/download', methods=['GET'])
+def download_pragati_data():
+    try:
+        # Get filter parameters from request
+        factory = request.args.get('factory', 'all')
+        batch = request.args.get('batch', 'all')
+        diploma = request.args.get('diploma', 'all')
+        gender = request.args.get('gender', 'all')
+        category = request.args.get('category', 'all')
+        course_year = request.args.get('course_year', 'all')
+        final_result = request.args.get('final_result', 'all')
+        training = request.args.get('training', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
+        tab = request.args.get('tab', 'overall')
+        
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if factory != 'all':
+                where_conditions.append("factory = %s")
+                params.append(factory)
+            
+            if batch != 'all':
+                where_conditions.append("pragati_batch_number = %s")
+                params.append(batch)
+            
+            if diploma != 'all':
+                where_conditions.append("diploma_name = %s")
+                params.append(diploma)
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            if category != 'all':
+                where_conditions.append("employee_category = %s")
+                params.append(category)
+            
+            if course_year != 'all':
+                where_conditions.append("course_joining_year = %s")
+                params.append(course_year)
+            
+            if final_result != 'all':
+                where_conditions.append("final_result = %s")
+                params.append(final_result)
+            
+            if training != 'all':
+                where_conditions.append("training_name = %s")
+                params.append(training)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_of_joining >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_of_joining <= %s")
+                params.append(end_date)
+            
+            # Add tab-specific conditions
+            current_year = datetime.datetime.now().year
+            previous_year = current_year - 1
+            
+            if tab == 'live':
+                # Students whose final result is not yet declared
+                where_conditions.append("(final_result IS NULL OR final_result = '')")
+            elif tab == 'first-year':
+                # Students in first year: 
+                # 1. Joined in current year (2025)
+                # 2. Joined in previous year (2024) but 1st year result not updated
+                where_conditions.append("((course_joining_year = %s) OR (course_joining_year = %s AND (first_year_result IS NULL OR first_year_result = '')))")
+                params.extend([current_year, previous_year])
+            elif tab == 'second-year':
+                # Students in second year:
+                # Joined in previous year (2024), 1st year result updated, but final result not updated
+                where_conditions.append("(course_joining_year = %s AND first_year_result IS NOT NULL AND first_year_result != '' AND (final_result IS NULL OR final_result = ''))")
+                params.append(previous_year)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM pragati WHERE {where_clause} ORDER BY sr_no DESC"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Convert records to DataFrame
+            df = pd.DataFrame(records)
+            
+            # Rename columns to proper names
+            column_mapping = {
+                'sr_no': 'Sr No',
+                'ticket_no': 'Ticket No',
+                'name': 'Name',
+                'gender': 'Gender',
+                'employee_category': 'Employee Category',
+                'factory': 'Factory',
+                'course_joining_year': 'Course Joining Year',
+                'date_of_joining': 'Date of Joining',
+                'pragati_batch_number': 'Pragati Batch No',
+                'diploma_name': 'Diploma Name',
+                'first_year_result': '1st Year Result',
+                'second_year_result': '2nd Year Result',
+                'final_result': 'Final Result',
+                'training_name': 'Training Name',
+                'remark': 'Remark'
             }
             
-            // Update raw data if visible
-            if (showRawDataToggle.checked) {
-              updateRawDataTable(data.records, isLoadMore);
+            # Rename the columns
+            df = df.rename(columns=column_mapping)
+            
+            # Format dates
+            date_columns = ['Date of Joining']
+            for col in date_columns:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col]).dt.strftime('%Y-%m-%d')
+            
+            # Reorder columns to match the desired order
+            desired_columns = [
+                'Sr No', 'Ticket No', 'Name', 'Gender', 'Employee Category', 
+                'Factory', 'Course Joining Year', 'Date of Joining', 
+                'Pragati Batch No', 'Diploma Name', '1st Year Result', 
+                '2nd Year Result', 'Final Result', 'Training Name', 'Remark'
+            ]
+            
+            # Filter to only include columns that exist in the dataframe
+            columns_to_use = [col for col in desired_columns if col in df.columns]
+            df = df[columns_to_use]
+            
+            # Create an Excel file in memory
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name='Pragati Data')
+                
+                # Adjust column widths for better readability
+                worksheet = writer.sheets['Pragati Data']
+                for idx, col in enumerate(df.columns):
+                    # Set column width based on content length
+                    max_length = max(
+                        df[col].astype(str).apply(len).max(),
+                        len(col)
+                    ) + 2  # Add some padding
+                    worksheet.column_dimensions[chr(65 + idx)].width = min(max_length, 50)  # Cap width at 50
+            
+            output.seek(0)
+            
+            # Return the Excel file as a response
+            return send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name='pragati_data.xlsx'
+            )
+            
+    except Exception as e:
+        print(f"Error generating Pragati Excel file: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+import datetime
+
+# FTA Main Page
+@user_tech_bp.route('/fta', methods=['GET'])
+def fta_list():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            sql = "SELECT * FROM fta ORDER BY sr_no DESC"
+            cursor.execute(sql)
+            fta_data = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching FTA data: {e}")
+        fta_data = []
+    finally:
+        conn.close()
+
+    return render_template("user/fta.html", fta_data=fta_data)
+
+# FTA Filter Options API
+@user_tech_bp.route('/api/fta/filter-options', methods=['GET'])
+def get_fta_filter_options():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Get unique values for each filter
+            cursor.execute("SELECT DISTINCT gender FROM fta WHERE gender IS NOT NULL ORDER BY gender")
+            genders = [row['gender'] for row in cursor.fetchall()]
+            
+            # Get distinct academic years from joining_year
+            cursor.execute("SELECT DISTINCT joining_year FROM fta WHERE joining_year IS NOT NULL ORDER BY joining_year")
+            academic_years = []
+            for row in cursor.fetchall():
+                year = row['joining_year']
+                # Format as "YYYY/YY"
+                formatted_year = f"{int(year)}/{str(int(year)+1)[2:]}"
+                academic_years.append(formatted_year)
+            
+            # Get distinct faculty names
+            cursor.execute("SELECT DISTINCT faculty_name FROM fta WHERE faculty_name IS NOT NULL ORDER BY faculty_name")
+            faculties = [row['faculty_name'] for row in cursor.fetchall()]
+            
+            # Get distinct FTA batch numbers
+            cursor.execute("SELECT DISTINCT fta_batch_number FROM fta WHERE fta_batch_number IS NOT NULL ORDER BY fta_batch_number")
+            fta_batches = [row['fta_batch_number'] for row in cursor.fetchall()]
+            
+            # Get distinct trades
+            cursor.execute("SELECT DISTINCT trade FROM fta WHERE trade IS NOT NULL ORDER BY trade")
+            trades = [row['trade'] for row in cursor.fetchall()]
+            
+            # Get distinct all_women_batch values
+            cursor.execute("SELECT DISTINCT all_women_batch FROM fta WHERE all_women_batch IS NOT NULL ORDER BY all_women_batch")
+            all_women_batches = [row['all_women_batch'] for row in cursor.fetchall()]
+            
+            # Get distinct second_year_inplant_shop values
+            cursor.execute("SELECT DISTINCT second_year_inplant_shop FROM fta WHERE second_year_inplant_shop IS NOT NULL ORDER BY second_year_inplant_shop")
+            second_year_inplants = [row['second_year_inplant_shop'] for row in cursor.fetchall()]
+            
+            # Get distinct final_result values
+            cursor.execute("SELECT DISTINCT final_result FROM fta WHERE final_result IS NOT NULL ORDER BY final_result")
+            final_results = [row['final_result'] for row in cursor.fetchall()]
+            
+            # Get distinct training names
+            cursor.execute("SELECT DISTINCT training_name FROM fta WHERE training_name IS NOT NULL ORDER BY training_name")
+            training_names = [row['training_name'] for row in cursor.fetchall()]
+            
+        return jsonify({
+            'genders': genders,
+            'academic_years': academic_years,
+            'faculties': faculties,
+            'fta_batches': fta_batches,
+            'trades': trades,
+            'all_women_batches': all_women_batches,
+            'second_year_inplants': second_year_inplants,
+            'final_results': final_results,
+            'training_names': training_names
+        })
+    except Exception as e:
+        print(f"Error fetching FTA filter options: {e}")
+        return jsonify({
+            'genders': [],
+            'academic_years': [],
+            'faculties': [],
+            'fta_batches': [],
+            'trades': [],
+            'all_women_batches': [],
+            'second_year_inplants': [],
+            'final_results': [],
+            'training_names': []
+        }), 500
+    finally:
+        conn.close()
+
+# FTA Data API
+@user_tech_bp.route('/api/fta/data', methods=['GET'])
+def get_fta_data():
+    try:
+        # Get filter parameters from request
+        gender = request.args.get('gender', 'all')
+        academic_year = request.args.get('academic_year', 'all')
+        faculty = request.args.get('faculty', 'all')
+        fta_batch = request.args.get('fta_batch', 'all')
+        trade = request.args.get('trade', 'all')
+        all_women_batch = request.args.get('all_women_batch', 'all')
+        second_year_inplant = request.args.get('second_year_inplant', 'all')
+        final_result = request.args.get('final_result', 'all')
+        training_name = request.args.get('training_name', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
+        
+        # Pagination parameters
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+        
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            # Handle academic year filter
+            if academic_year != 'all':
+                # Extract the base year from the formatted academic year (e.g., "2023/24" -> 2023)
+                base_year = academic_year.split('/')[0]
+                where_conditions.append("joining_year = %s")
+                params.append(base_year)
+            
+            if faculty != 'all':
+                where_conditions.append("faculty_name = %s")
+                params.append(faculty)
+            
+            if fta_batch != 'all':
+                where_conditions.append("fta_batch_number = %s")
+                params.append(fta_batch)
+            
+            if trade != 'all':
+                where_conditions.append("trade = %s")
+                params.append(trade)
+            
+            if all_women_batch != 'all':
+                where_conditions.append("all_women_batch = %s")
+                params.append(all_women_batch)
+            
+            if second_year_inplant != 'all':
+                where_conditions.append("second_year_inplant_shop = %s")
+                params.append(second_year_inplant)
+            
+            if final_result != 'all':
+                where_conditions.append("final_result = %s")
+                params.append(final_result)
+            
+            if training_name != 'all':
+                where_conditions.append("training_name = %s")
+                params.append(training_name)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_of_joining >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_of_separation <= %s")
+                params.append(end_date)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM fta WHERE {where_clause} ORDER BY sr_no DESC LIMIT {limit} OFFSET {offset}"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Get total count for pagination
+            count_sql = f"SELECT COUNT(*) as total FROM fta WHERE {where_clause}"
+            cursor.execute(count_sql, params)
+            total_count = cursor.fetchone()['total']
+            
+            # Calculate statistics - Updated to include male and female counts
+            stats_sql = f"""
+                SELECT 
+                    COUNT(DISTINCT fta_batch_number) as batch_count,
+                    COUNT(*) as coverage_count,
+                    COUNT(CASE WHEN all_women_batch = 'Yes' THEN 1 END) as women_batch_count,
+                    COUNT(CASE WHEN second_year_inplant_shop = 'Yes' THEN 1 END) as inplant_shop_count,
+                    COUNT(CASE WHEN gender = 'Male' THEN 1 END) as male_count,
+                    COUNT(CASE WHEN gender = 'Female' THEN 1 END) as female_count
+                FROM fta 
+                WHERE {where_clause}
+            """
+            cursor.execute(stats_sql, params)
+            stats = cursor.fetchone()
+            
+        # Convert records to list of dictionaries for JSON serialization
+        records_list = []
+        for record in records:
+            # Format academic year for display
+            academic_year_display = ""
+            if record['joining_year']:
+                academic_year_display = f"{int(record['joining_year'])}/{str(int(record['joining_year'])+1)[2:]}"
+            
+            records_list.append({
+                'sr_no': record['sr_no'],
+                'ticket_no': record['ticket_no'],
+                'name': record['name'],
+                'gender': record['gender'],
+                'academic_year': academic_year_display,
+                'date_of_joining': record['date_of_joining'].strftime('%Y-%m-%d') if record['date_of_joining'] else '',
+                'fta_batch_number': record['fta_batch_number'],
+                'date_of_separation': record['date_of_separation'].strftime('%Y-%m-%d') if record['date_of_separation'] else '',
+                'trade': record['trade'],
+                'all_women_batch': record['all_women_batch'],
+                'second_year_inplant_shop': record['second_year_inplant_shop'],
+                'faculty_name': record['faculty_name'],
+                'final_result': record['final_result'],
+                'training_name': record['training_name']
+            })
+        
+        return jsonify({
+            'records': records_list,
+            'stats': {
+                'batch_count': stats['batch_count'] if stats else 0,
+                'coverage_count': stats['coverage_count'] if stats else 0,
+                'women_batch_count': stats['women_batch_count'] if stats else 0,
+                'inplant_shop_count': stats['inplant_shop_count'] if stats else 0,
+                'male_count': stats['male_count'] if stats else 0,
+                'female_count': stats['female_count'] if stats else 0
+            },
+            'total_records': total_count
+        })
+        
+    except Exception as e:
+        print(f"Error fetching FTA data: {e}")
+        return jsonify({
+            'records': [],
+            'stats': {
+                'batch_count': 0,
+                'coverage_count': 0,
+                'women_batch_count': 0,
+                'inplant_shop_count': 0,
+                'male_count': 0,
+                'female_count': 0
+            },
+            'total_records': 0
+        }), 500
+    finally:
+        conn.close()
+
+# FTA Download Excel API
+@user_tech_bp.route('/api/fta/download', methods=['GET'])
+def download_fta_data():
+    try:
+        # Get filter parameters from request
+        gender = request.args.get('gender', 'all')
+        academic_year = request.args.get('academic_year', 'all')
+        faculty = request.args.get('faculty', 'all')
+        fta_batch = request.args.get('fta_batch', 'all')
+        trade = request.args.get('trade', 'all')
+        all_women_batch = request.args.get('all_women_batch', 'all')
+        second_year_inplant = request.args.get('second_year_inplant', 'all')
+        final_result = request.args.get('final_result', 'all')
+        training_name = request.args.get('training_name', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
+        
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            # Handle academic year filter
+            if academic_year != 'all':
+                base_year = academic_year.split('/')[0]
+                where_conditions.append("joining_year = %s")
+                params.append(base_year)
+            
+            if faculty != 'all':
+                where_conditions.append("faculty_name = %s")
+                params.append(faculty)
+            
+            if fta_batch != 'all':
+                where_conditions.append("fta_batch_number = %s")
+                params.append(fta_batch)
+            
+            if trade != 'all':
+                where_conditions.append("trade = %s")
+                params.append(trade)
+            
+            if all_women_batch != 'all':
+                where_conditions.append("all_women_batch = %s")
+                params.append(all_women_batch)
+            
+            if second_year_inplant != 'all':
+                where_conditions.append("second_year_inplant_shop = %s")
+                params.append(second_year_inplant)
+            
+            if final_result != 'all':
+                where_conditions.append("final_result = %s")
+                params.append(final_result)
+            
+            if training_name != 'all':
+                where_conditions.append("training_name = %s")
+                params.append(training_name)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_of_joining >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_of_separation <= %s")
+                params.append(end_date)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM fta WHERE {where_clause} ORDER BY sr_no DESC"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Convert records to DataFrame
+            df = pd.DataFrame(records)
+            
+            # Rename columns to proper names
+            column_mapping = {
+                'sr_no': 'Sr No',
+                'ticket_no': 'Ticket No',
+                'name': 'Name',
+                'gender': 'Gender',
+                'joining_year': 'Joining Year',
+                'date_of_joining': 'Date of Joining',
+                'fta_batch_number': 'FTA Batch Number',
+                'date_of_separation': 'Date of Separation',
+                'trade': 'Trade',
+                'all_women_batch': 'All Women Batch',
+                'second_year_inplant_shop': 'Second Year Implant Shop',
+                'faculty_name': 'Faculty Name',
+                'final_result': 'Final Result',
+                'training_name': 'Training Name'
             }
             
-            // Update applied filters display
-            updateAppliedFilters(filters);
+            # Rename the columns
+            df = df.rename(columns=column_mapping)
             
-            // Update pagination
-            totalRecords = data.total_records;
-            updatePagination();
+            # Create Academic Year column from joining_year and format it
+            if 'Joining Year' in df.columns:
+                df['Academic Year'] = df['Joining Year'].apply(
+                    lambda x: f"{int(x)}/{str(int(x)+1)[2:]}" if pd.notnull(x) else ''
+                )
+                # Drop the original joining_year column
+                df = df.drop(columns=['Joining Year'])
             
-            hideLoading();
-            isLoading = false;
-          })
-          .catch(error => {
-            console.error('Error fetching JTA data:', error);
-            alert('Error loading data. Please try again later.');
-            hideLoading();
-            isLoading = false;
-          });
-      }
+            # Format dates
+            date_columns = ['Date of Joining', 'Date of Separation']
+            for col in date_columns:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col]).dt.strftime('%Y-%m-%d')
+            
+            # Reorder columns to match the desired order
+            desired_columns = [
+                'Sr No', 'Ticket No', 'Name', 'Gender', 'Academic Year', 
+                'Date of Joining', 'FTA Batch Number', 'Date of Separation', 
+                'Trade', 'All Women Batch', 'Second Year Implant Shop', 
+                'Faculty Name', 'Final Result', 'Training Name'
+            ]
+            
+            # Filter to only include columns that exist in the dataframe
+            columns_to_use = [col for col in desired_columns if col in df.columns]
+            df = df[columns_to_use]
+            
+            # Create an Excel file in memory
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name='FTA Data')
+                
+                # Adjust column widths for better readability
+                worksheet = writer.sheets['FTA Data']
+                for idx, col in enumerate(df.columns):
+                    # Set column width based on content length
+                    max_length = max(
+                        df[col].astype(str).apply(len).max(),
+                        len(col)
+                    ) + 2  # Add some padding
+                    worksheet.column_dimensions[chr(65 + idx)].width = min(max_length, 50)  # Cap width at 50
+            
+            output.seek(0)
+            
+            # Return the Excel file as a response
+            return send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name='fta_data.xlsx'
+            )
+            
+    except Exception as e:
+        print(f"Error generating FTA Excel file: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
-      // Fetch current year data separately
-      function fetchCurrentYearData() {
-        const filters = {
-          academic_year: currentAcademicYear,
-          limit: 1,
-          offset: 0
-        };
+# JTA Main Page
+@user_tech_bp.route('/jta', methods=['GET'])
+def jta_list():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            sql = "SELECT * FROM jta ORDER BY sr_no DESC"
+            cursor.execute(sql)
+            jta_data = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching JTA data: {e}")
+        jta_data = []
+    finally:
+        conn.close()
+
+    return render_template("user/jta.html", jta_data=jta_data)
+
+# JTA Filter Options API
+@user_tech_bp.route('/api/jta/filter-options', methods=['GET'])
+def get_jta_filter_options():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Get unique values for each filter
+            cursor.execute("SELECT DISTINCT gender FROM jta WHERE gender IS NOT NULL ORDER BY gender")
+            genders = [row['gender'] for row in cursor.fetchall()]
+            
+            # Get distinct academic years from joining_year
+            cursor.execute("SELECT DISTINCT joining_year FROM jta WHERE joining_year IS NOT NULL ORDER BY joining_year")
+            academic_years = []
+            for row in cursor.fetchall():
+                year = row['joining_year']
+                # Format as "YYYY/YY"
+                formatted_year = f"{int(year)}/{str(int(year)+1)[2:]}"
+                academic_years.append(formatted_year)
+            
+            # Get distinct JTA batch numbers
+            cursor.execute("SELECT DISTINCT jta_batch_number FROM jta WHERE jta_batch_number IS NOT NULL ORDER BY jta_batch_number")
+            jta_batches = [row['jta_batch_number'] for row in cursor.fetchall()]
+            
+            # Get distinct trades
+            cursor.execute("SELECT DISTINCT trade FROM jta WHERE trade IS NOT NULL ORDER BY trade")
+            trades = [row['trade'] for row in cursor.fetchall()]
+            
+            # Get distinct final_result values
+            cursor.execute("SELECT DISTINCT final_result FROM jta WHERE final_result IS NOT NULL ORDER BY final_result")
+            final_results = [row['final_result'] for row in cursor.fetchall()]
+            
+            # Get distinct training names
+            cursor.execute("SELECT DISTINCT training_name FROM jta WHERE training_name IS NOT NULL ORDER BY training_name")
+            training_names = [row['training_name'] for row in cursor.fetchall()]
+            
+            # Get distinct employee categories
+            cursor.execute("SELECT DISTINCT employee_category FROM jta WHERE employee_category IS NOT NULL ORDER BY employee_category")
+            employee_categories = [row['employee_category'] for row in cursor.fetchall()]
+            
+            # Get distinct status values
+            cursor.execute("SELECT DISTINCT status FROM jta WHERE status IS NOT NULL ORDER BY status")
+            statuses = [row['status'] for row in cursor.fetchall()]
+            
+        return jsonify({
+            'genders': genders,
+            'academic_years': academic_years,
+            'jta_batches': jta_batches,
+            'trades': trades,
+            'final_results': final_results,
+            'training_names': training_names,
+            'employee_categories': employee_categories,
+            'statuses': statuses
+        })
+    except Exception as e:
+        print(f"Error fetching JTA filter options: {e}")
+        return jsonify({
+            'genders': [],
+            'academic_years': [],
+            'jta_batches': [],
+            'trades': [],
+            'final_results': [],
+            'training_names': [],
+            'employee_categories': [],
+            'statuses': []
+        }), 500
+    finally:
+        conn.close()
+
+# JTA Data API
+@user_tech_bp.route('/api/jta/data', methods=['GET'])
+def get_jta_data():
+    try:
+        # Get filter parameters from request
+        gender = request.args.get('gender', 'all')
+        academic_year = request.args.get('academic_year', 'all')
+        jta_batch = request.args.get('jta_batch', 'all')
+        trade = request.args.get('trade', 'all')
+        final_result = request.args.get('final_result', 'all')
+        training_name = request.args.get('training_name', 'all')
+        employee_category = request.args.get('employee_category', 'all')
+        status = request.args.get('status', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
         
-        const queryString = new URLSearchParams();
-        for (const key in filters) {
-          queryString.append(key, filters[key]);
-        }
+        # Pagination parameters
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
         
-        fetch(`/user_tech/api/jta/data?${queryString.toString()}`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            # Handle academic year filter
+            if academic_year != 'all':
+                # Extract the base year from the formatted academic year (e.g., "2023/24" -> 2023)
+                base_year = academic_year.split('/')[0]
+                where_conditions.append("joining_year = %s")
+                params.append(base_year)
+            
+            if jta_batch != 'all':
+                where_conditions.append("jta_batch_number = %s")
+                params.append(jta_batch)
+            
+            if trade != 'all':
+                where_conditions.append("trade = %s")
+                params.append(trade)
+            
+            if final_result != 'all':
+                where_conditions.append("final_result = %s")
+                params.append(final_result)
+            
+            if training_name != 'all':
+                where_conditions.append("training_name = %s")
+                params.append(training_name)
+            
+            if employee_category != 'all':
+                where_conditions.append("employee_category = %s")
+                params.append(employee_category)
+            
+            if status != 'all':
+                where_conditions.append("status = %s")
+                params.append(status)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_of_joining >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_of_separation <= %s")
+                params.append(end_date)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM jta WHERE {where_clause} ORDER BY sr_no DESC LIMIT {limit} OFFSET {offset}"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Get total count for pagination
+            count_sql = f"SELECT COUNT(*) as total FROM jta WHERE {where_clause}"
+            cursor.execute(count_sql, params)
+            total_count = cursor.fetchone()['total']
+            
+            # Calculate statistics with additional fields
+            stats_sql = f"""
+                SELECT 
+                    COUNT(DISTINCT jta_batch_number) as batch_count,
+                    COUNT(*) as coverage_count,
+                    COUNT(CASE WHEN gender = 'Male' THEN 1 END) as male_count,
+                    COUNT(CASE WHEN gender = 'Female' THEN 1 END) as female_count,
+                    COUNT(CASE WHEN status = 'Active' THEN 1 END) as live_count,
+                    COUNT(CASE WHEN status IN ('Separated', 'Terminated', 'Resigned', 'Retired') THEN 1 END) as separated_count
+                FROM jta 
+                WHERE {where_clause}
+            """
+            cursor.execute(stats_sql, params)
+            stats = cursor.fetchone()
+            
+        # Convert records to list of dictionaries for JSON serialization
+        records_list = []
+        for record in records:
+            # Format academic year for display
+            academic_year_display = ""
+            if record['joining_year']:
+                academic_year_display = f"{int(record['joining_year'])}/{str(int(record['joining_year'])+1)[2:]}"
+            
+            records_list.append({
+                'sr_no': record['sr_no'],
+                'ticket_no': record['ticket_no'],
+                'name': record['name'],
+                'gender': record['gender'],
+                'academic_year': academic_year_display,
+                'date_of_joining': record['date_of_joining'].strftime('%Y-%m-%d') if record['date_of_joining'] else '',
+                'jta_batch_number': record['jta_batch_number'],
+                'date_of_separation': record['date_of_separation'].strftime('%Y-%m-%d') if record['date_of_separation'] else '',
+                'trade': record['trade'],
+                'final_result': record['final_result'],
+                'training_name': record['training_name'],
+                'employee_category': record['employee_category'],
+                'status': record['status']
+            })
+        
+        return jsonify({
+            'records': records_list,
+            'stats': {
+                'batch_count': stats['batch_count'] if stats else 0,
+                'coverage_count': stats['coverage_count'] if stats else 0,
+                'male_count': stats['male_count'] if stats else 0,
+                'female_count': stats['female_count'] if stats else 0,
+                'live_count': stats['live_count'] if stats else 0,
+                'separated_count': stats['separated_count'] if stats else 0
+            },
+            'total_records': total_count
+        })
+        
+    except Exception as e:
+        print(f"Error fetching JTA data: {e}")
+        return jsonify({
+            'records': [],
+            'stats': {
+                'batch_count': 0,
+                'coverage_count': 0,
+                'male_count': 0,
+                'female_count': 0,
+                'live_count': 0,
+                'separated_count': 0
+            },
+            'total_records': 0
+        }), 500
+    finally:
+        conn.close()
+
+# JTA Download Excel API
+@user_tech_bp.route('/api/jta/download', methods=['GET'])
+def download_jta_data():
+    try:
+        # Get filter parameters from request
+        gender = request.args.get('gender', 'all')
+        academic_year = request.args.get('academic_year', 'all')
+        jta_batch = request.args.get('jta_batch', 'all')
+        trade = request.args.get('trade', 'all')
+        final_result = request.args.get('final_result', 'all')
+        training_name = request.args.get('training_name', 'all')
+        employee_category = request.args.get('employee_category', 'all')
+        status = request.args.get('status', 'all')
+        ticket = request.args.get('ticket', '')
+        start_date = request.args.get('startDate', '')
+        end_date = request.args.get('endDate', '')
+        
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # Build WHERE clause based on filters
+            where_conditions = []
+            params = []
+            
+            if gender != 'all':
+                where_conditions.append("gender = %s")
+                params.append(gender)
+            
+            # Handle academic year filter
+            if academic_year != 'all':
+                base_year = academic_year.split('/')[0]
+                where_conditions.append("joining_year = %s")
+                params.append(base_year)
+            
+            if jta_batch != 'all':
+                where_conditions.append("jta_batch_number = %s")
+                params.append(jta_batch)
+            
+            if trade != 'all':
+                where_conditions.append("trade = %s")
+                params.append(trade)
+            
+            if final_result != 'all':
+                where_conditions.append("final_result = %s")
+                params.append(final_result)
+            
+            if training_name != 'all':
+                where_conditions.append("training_name = %s")
+                params.append(training_name)
+            
+            if employee_category != 'all':
+                where_conditions.append("employee_category = %s")
+                params.append(employee_category)
+            
+            if status != 'all':
+                where_conditions.append("status = %s")
+                params.append(status)
+            
+            if ticket:
+                where_conditions.append("ticket_no LIKE %s")
+                params.append(f"%{ticket}%")
+            
+            if start_date:
+                where_conditions.append("date_of_joining >= %s")
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append("date_of_separation <= %s")
+                params.append(end_date)
+            
+            # Build the SQL query
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+            sql = f"SELECT * FROM jta WHERE {where_clause} ORDER BY sr_no DESC"
+            
+            cursor.execute(sql, params)
+            records = cursor.fetchall()
+            
+            # Convert records to DataFrame
+            df = pd.DataFrame(records)
+            
+            # Rename columns to proper names
+            column_mapping = {
+                'sr_no': 'Sr No',
+                'ticket_no': 'Ticket No',
+                'name': 'Name',
+                'gender': 'Gender',
+                'joining_year': 'Joining Year',
+                'date_of_joining': 'Date of Joining',
+                'jta_batch_number': 'JTA Batch Number',
+                'date_of_separation': 'Date of Separation',
+                'trade': 'Trade',
+                'final_result': 'Final Result',
+                'training_name': 'Training Name',
+                'employee_category': 'Employee Category',
+                'status': 'Status'
             }
-            return response.json();
-          })
-          .then(data => {
-            statCurrentYear.textContent = data.stats.coverage_count;
-          })
-          .catch(error => {
-            console.error('Error fetching current year data:', error);
-            statCurrentYear.textContent = '0';
-          });
-      }
-
-      // Update raw data table
-      function updateRawDataTable(records, isAppend = false) {
-        if (!isAppend) {
-          rawDataBody.innerHTML = '';
-        }
-        
-        if (records.length === 0 && !isAppend) {
-          const row = document.createElement('tr');
-          row.innerHTML = '<td colspan="13" class="text-center">No data found</td>';
-          rawDataBody.appendChild(row);
-          return;
-        }
-        
-        records.forEach(record => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${record.sr_no || ''}</td>
-            <td>${record.ticket_no || ''}</td>
-            <td>${record.name || ''}</td>
-            <td>${record.gender || ''}</td>
-            <td>${record.academic_year || ''}</td>
-            <td>${record.date_of_joining || ''}</td>
-            <td>${record.jta_batch_number || ''}</td>
-            <td>${record.date_of_separation || ''}</td>
-            <td>${record.trade || ''}</td>
-            <td>${record.final_result || ''}</td>
-            <td>${record.training_name || ''}</td>
-            <td>${record.employee_category || ''}</td>
-            <td>${record.status || ''}</td>
-          `;
-          rawDataBody.appendChild(row);
-        });
-      }
-
-      // Update pagination
-      function updatePagination() {
-        const loadedRecords = currentPage * pageSize + rawDataBody.children.length;
-        
-        if (loadedRecords >= totalRecords) {
-          loadMoreBtn.disabled = true;
-          loadMoreBtn.textContent = 'All records loaded';
-        } else {
-          loadMoreBtn.disabled = false;
-          loadMoreBtn.textContent = 'Load More';
-        }
-      }
-
-      // Update applied filters display
-      function updateAppliedFilters(filters) {
-        appliedFiltersList.innerHTML = '';
-        let hasFilters = false;
-        
-        const filterLabels = {
-          gender: 'Gender',
-          academic_year: 'Academic Year',
-          jta_batch: 'JTA Batch',
-          trade: 'Trade',
-          final_result: 'Final Result',
-          training_name: 'Training Name',
-          employee_category: 'Employee Category',
-          status: 'Status',
-          ticket: 'Ticket Number',
-          startDate: 'Start Date',
-          endDate: 'End Date'
-        };
-        
-        for (const key in filters) {
-          if (filters[key] && filters[key] !== 'all' && filters[key] !== '' && key !== 'limit' && key !== 'offset') {
-            hasFilters = true;
-            const filterItem = document.createElement('div');
-            filterItem.className = 'applied-filter-item';
             
-            let displayValue = filters[key];
-            if (key === 'startDate' || key === 'endDate') {
-              displayValue = new Date(filters[key]).toLocaleDateString();
-            }
+            # Rename the columns
+            df = df.rename(columns=column_mapping)
             
-            filterItem.innerHTML = `
-              <span class="filter-key">${filterLabels[key]}:</span>
-              <span class="filter-value">${displayValue}</span>
-            `;
-            appliedFiltersList.appendChild(filterItem);
-          }
-        }
-        
-        appliedFiltersStrip.style.display = hasFilters ? 'flex' : 'none';
-      }
-
-      // Function to download data by status
-      function downloadByStatus(status) {
-        // For live count, we only want status = 'Active' without any other filters
-        const filters = {
-          status: status
-        };
-        
-        const queryString = new URLSearchParams();
-        for (const key in filters) {
-          queryString.append(key, filters[key]);
-        }
-        
-        const downloadUrl = `/user_tech/api/jta/download?${queryString.toString()}`;
-        window.location.href = downloadUrl;
-      }
-
-      // Function to download data by gender with active status
-      function downloadByGender(gender) {
-        // For gender counts, we want gender and status = 'Active' without any other filters
-        const filters = {
-          gender: gender,
-          status: 'Active'
-        };
-        
-        const queryString = new URLSearchParams();
-        for (const key in filters) {
-          queryString.append(key, filters[key]);
-        }
-        
-        const downloadUrl = `/user_tech/api/jta/download?${queryString.toString()}`;
-        window.location.href = downloadUrl;
-      }
-
-      // Function to download current year data
-      function downloadCurrentYear() {
-        // Build the same filter parameters as when fetching data
-        const filters = {
-          gender: filterGender.value,
-          academic_year: currentAcademicYear, // Use current academic year
-          jta_batch: filterJtaBatch.value,
-          trade: filterTrade.value,
-          final_result: filterFinalResult.value,
-          training_name: filterTrainingName.value,
-          employee_category: filterEmployeeCategory.value,
-          status: filterStatus.value,
-          ticket: filterTicket.value,
-          startDate: filterStartDate.value,
-          endDate: filterEndDate.value
-        };
-        
-        // Build query string
-        const queryString = new URLSearchParams();
-        for (const key in filters) {
-          if (filters[key] !== 'all' && filters[key] !== '') {
-            queryString.append(key, filters[key]);
-          }
-        }
-        
-        // Open the download link
-        const downloadUrl = `/user_tech/api/jta/download?${queryString.toString()}`;
-        window.location.href = downloadUrl;
-      }
-
-      // Event listeners
-      applyFiltersBtn.addEventListener('click', function() {
-        fetchJtaData();
-        fetchAllStatsData(); // Always fetch all stats when filters are applied
-        // Hide filter panel after applying filters
-        filterSidePanel.classList.remove('active');
-        filterControlArea.classList.remove('panel-open');
-      });
-      
-      resetFiltersBtn.addEventListener('click', function() {
-        filterGender.value = 'all';
-        filterJtaBatch.value = 'all';
-        filterTrade.value = 'all';
-        filterFinalResult.value = 'all';
-        filterTrainingName.value = 'all';
-        filterEmployeeCategory.value = 'all';
-        filterStatus.value = 'all';
-        filterTicket.value = '';
-        filterStartDate.value = '';
-        filterEndDate.value = '';
-        
-        // Set current year as default
-        setCurrentYearAsDefault();
-        
-        fetchJtaData();
-        fetchAllStatsData(); // Always fetch all stats when filters are reset
-        // Hide filter panel after resetting
-        filterSidePanel.classList.remove('active');
-        filterControlArea.classList.remove('panel-open');
-      });
-      
-      showRawDataToggle.addEventListener('change', function() {
-        rawDataContainer.style.display = this.checked ? 'block' : 'none';
-        if (this.checked) {
-          // If toggled on, refresh data to show in table
-          fetchJtaData();
-        }
-      });
-
-      // Load more button event listener
-      loadMoreBtn.addEventListener('click', function() {
-        currentPage++;
-        fetchJtaData(true);
-      });
-
-      // Download button event listeners
-      downloadLiveBtn.addEventListener('click', function() {
-        downloadByStatus('Active');
-      });
-
-      downloadMaleBtn.addEventListener('click', function() {
-        downloadByGender('Male');
-      });
-
-      downloadFemaleBtn.addEventListener('click', function() {
-        downloadByGender('Female');
-      });
-
-      downloadCurrentYearBtn.addEventListener('click', function() {
-        downloadCurrentYear();
-      });
-
-      // Initialize the dashboard
-      fetchFilterOptions();
-    });
-  </script>
-</body>
-</html>
+            # Create Academic Year column from joining_year and format it
+            if 'Joining Year' in df.columns:
+                df['Academic Year'] = df['Joining Year'].apply(
+                    lambda x: f"{int(x)}/{str(int(x)+1)[2:]}" if pd.notnull(x) else ''
+                )
+                # Drop the original joining_year column
+                df = df.drop(columns=['Joining Year'])
+            
+            # Format dates
+            date_columns = ['Date of Joining', 'Date of Separation']
+            for col in date_columns:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col]).dt.strftime('%Y-%m-%d')
+            
+            # Reorder columns to match the desired order
+            desired_columns = [
+                'Sr No', 'Ticket No', 'Name', 'Gender', 'Academic Year', 
+                'Date of Joining', 'JTA Batch Number', 'Date of Separation', 
+                'Trade', 'Final Result', 'Training Name', 'Employee Category', 'Status'
+            ]
+            
+            # Filter to only include columns that exist in the dataframe
+            columns_to_use = [col for col in desired_columns if col in df.columns]
+            df = df[columns_to_use]
+            
+            # Create an Excel file in memory
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name='JTA Data')
+                
+                # Adjust column widths for better readability
+                worksheet = writer.sheets['JTA Data']
+                for idx, col in enumerate(df.columns):
+                    # Set column width based on content length
+                    max_length = max(
+                        df[col].astype(str).apply(len).max(),
+                        len(col)
+                    ) + 2  # Add some padding
+                    worksheet.column_dimensions[chr(65 + idx)].width = min(max_length, 50)  # Cap width at 50
+            
+            output.seek(0)
+            
+            # Return the Excel file as a response
+            return send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name='jta_data.xlsx'
+            )
+            
+    except Exception as e:
+        print(f"Error generating JTA Excel file: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
